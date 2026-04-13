@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgroJusto | Plataforma Rural Inteligente</title>
+  <meta name="description" content="AgroJusto - sistema inteligente de precificacao, aluguel de maquinas e painel do produtor.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bree+Serif&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWix+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkR4j8E2R5eS4kRTHvQW0l9V0P7Y5P9M9R0A==" crossorigin="anonymous" referrerpolicy="no-referrer">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="bg-layer" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <i class="fa-solid fa-seedling"></i>
+      <div>
+        <h1>AgroJusto</h1>
+        <p>Preco justo para quem produz</p>
+      </div>
+    </div>
+    <div class="top-actions">
+      <span id="loggedUser" class="user-chip hidden">Visitante</span>
+      <button id="openProfileModal" class="btn ghost hidden" type="button">
+        <i class="fa-solid fa-user"></i>
+        Editar perfil
+      </button>
+      <button id="btnLogout" class="btn ghost hidden" type="button">
+        <i class="fa-solid fa-right-from-bracket"></i>
+        Sair
+      </button>
+    </div>
+  </header>
+
+  <section id="authGate" class="auth-gate">
+    <article class="auth-card card">
+      <h2>Entrar no AgroJusto</h2>
+      <p class="muted">Login simulado para demonstracao do TCC.</p>
+      <form id="loginForm" class="auth-form">
+        <label>
+          E-mail
+          <input id="loginEmail" type="email" required placeholder="produtor@agrojusto.com">
+        </label>
+        <label>
+          Senha
+          <input id="loginSenha" type="password" required placeholder="123456">
+        </label>
+        <button class="btn" type="submit">Entrar</button>
+      </form>
+      <button id="btnDemoLogin" class="btn secondary" type="button">Entrar com dados de demonstracao</button>
+      <p id="authMessage" class="badge auth-message hidden"></p>
+    </article>
+  </section>
+
+  <div id="appShell" class="hidden">
+    <nav class="tabs" aria-label="Navegacao principal">
+      <button class="tab-btn active" data-tab="inicio" type="button">Inicio</button>
+      <button class="tab-btn" data-tab="precificacao" type="button">Preco Justo</button>
+      <button class="tab-btn" data-tab="produtos" type="button">Produtos</button>
+      <button class="tab-btn" data-tab="maquinas" type="button">Maquinas</button>
+      <button class="tab-btn" data-tab="painel" type="button">Painel</button>
+    </nav>
+
+    <main class="page-wrap">
+    <section id="inicio" class="tab-panel active">
+      <article class="hero card">
+        <div>
+          <h2>Tecnologia simples para fortalecer o pequeno produtor</h2>
+          <p>
+            O AgroJusto calcula preco minimo e preco ideal com base em custos, oferta,
+            demanda e logistica, alem de conectar produtores no aluguel colaborativo de maquinas.
+          </p>
+          <div class="hero-actions">
+            <button class="btn" data-go="precificacao" type="button">Calcular preco</button>
+            <button class="btn secondary" data-go="maquinas" type="button">Ver maquinas</button>
+          </div>
+        </div>
+        <img src="https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=900&q=80" alt="Produtor no campo">
+      </article>
+
+      <article class="grid-3">
+        <div class="card mini">
+          <h3>1. Precificacao inteligente</h3>
+          <p>Evite prejuizo com base real de custo e ajuste de mercado local simulado.</p>
+        </div>
+        <div class="card mini">
+          <h3>2. Logistica no calculo</h3>
+          <p>Distancia aumenta custo de transporte e entra automaticamente no preco.</p>
+        </div>
+        <div class="card mini">
+          <h3>3. Impacto social</h3>
+          <p>Mercado mais justo, menos dependencia de atravessadores e renda mais digna.</p>
+        </div>
+      </article>
+    </section>
+
+    <section id="precificacao" class="tab-panel">
+      <article class="card">
+        <h2>Calculadora de Preco Justo</h2>
+        <p class="muted">Preencha os custos reais e o contexto do mercado para gerar uma sugestao de venda.</p>
+
+        <div class="form-grid">
+          <label>
+            Insumos (R$)
+            <input id="insumos" type="number" min="0" step="0.01" placeholder="0.00">
+          </label>
+          <label>
+            Mao de obra (R$)
+            <input id="maoDeObra" type="number" min="0" step="0.01" placeholder="0.00">
+          </label>
+          <label>
+            Transporte base (R$)
+            <input id="transporteBase" type="number" min="0" step="0.01" placeholder="0.00">
+          </label>
+          <label>
+            Manutencao (R$)
+            <input id="manutencao" type="number" min="0" step="0.01" placeholder="0.00">
+          </label>
+          <label>
+            Distancia (km)
+            <input id="distanciaKm" type="number" min="0" step="1" placeholder="Ex: 25">
+          </label>
+          <label>
+            Custo por km (R$)
+            <input id="custoKm" type="number" min="0" step="0.01" value="2.50">
+          </label>
+          <label>
+            Oferta regional
+            <select id="oferta">
+              <option value="baixa">Baixa</option>
+              <option value="media" selected>Media</option>
+              <option value="alta">Alta</option>
+            </select>
+          </label>
+          <label>
+            Demanda regional
+            <select id="demanda">
+              <option value="baixa">Baixa</option>
+              <option value="media" selected>Media</option>
+              <option value="alta">Alta</option>
+            </select>
+          </label>
+        </div>
+
+        <button id="btnCalcular" class="btn" type="button">Gerar sugestao</button>
+
+        <div id="resultadoPreco" class="result-box hidden" aria-live="polite">
+          <div>
+            <span>Preco minimo</span>
+            <strong id="precoMinimo">R$ 0,00</strong>
+          </div>
+          <div>
+            <span>Preco ideal</span>
+            <strong id="precoIdeal">R$ 0,00</strong>
+          </div>
+          <p id="resumoMercado" class="badge"></p>
+        </div>
+      </article>
+    </section>
+
+    <section id="produtos" class="tab-panel">
+      <article class="card">
+        <h2>Cadastro de Produtos Agricolas</h2>
+        <p class="muted">Para graos, use unidade em saca (60kg). O sistema aplica referencia media do mercado brasileiro quando o preco nao for informado.</p>
+        <form id="formProduto" class="form-grid">
+          <label>
+            Nome do produto
+            <input id="produtoNome" type="text" required placeholder="Ex: Tomate italiano">
+          </label>
+          <label>
+            Quantidade disponivel
+            <input id="produtoQuantidade" type="number" min="0" step="1" required placeholder="Ex: 120">
+          </label>
+          <label>
+            Unidade
+            <select id="produtoUnidade">
+              <option value="saca_60kg">saca (60kg)</option>
+              <option value="kg">kg</option>
+              <option value="t">tonelada (t)</option>
+              <option value="caixa">caixa</option>
+              <option value="un">unidade</option>
+            </select>
+          </label>
+          <label>
+            Tipo de cultivo
+            <select id="produtoCultivo">
+              <option value="organico">Organico</option>
+              <option value="convencional">Convencional</option>
+            </select>
+          </label>
+          <label>
+            Regiao de producao
+            <input id="produtoRegiao" type="text" required placeholder="Ex: Zona rural - Campinas">
+          </label>
+          <label>
+            URL da foto do produto
+            <input id="produtoImagem" type="url" placeholder="https://...">
+          </label>
+          <label>
+            Preco sugerido (R$)
+            <input id="produtoPreco" type="number" min="0" step="0.01" placeholder="Opcional">
+          </label>
+          <button class="btn" type="submit">Salvar produto</button>
+        </form>
+
+        <div id="listaProdutos" class="stack"></div>
+      </article>
+    </section>
+
+    <section id="maquinas" class="tab-panel">
+      <article class="card">
+        <h2>Aluguel de Maquinas e Ferramentas</h2>
+        <form id="formMaquina" class="form-grid">
+          <label>
+            Equipamento
+            <input id="maqNome" type="text" required placeholder="Ex: Trator 75cv">
+          </label>
+          <label>
+            Valor por dia (R$)
+            <input id="maqPreco" type="number" min="0" step="0.01" required>
+          </label>
+          <label>
+            Tipo
+            <select id="maqTipo">
+              <option value="trator">Trator</option>
+              <option value="implemento">Implemento</option>
+              <option value="ferramenta">Ferramenta</option>
+            </select>
+          </label>
+          <label>
+            Condicoes de uso
+            <input id="maqCondicoes" type="text" required placeholder="Ex: Entrega limpa e tanque cheio">
+          </label>
+          <label>
+            Dias disponiveis
+            <input id="maqDias" type="text" required placeholder="Ex: seg, ter, qua">
+          </label>
+          <label>
+            URL da imagem
+            <input id="maqImagem" type="url" placeholder="https://...">
+          </label>
+          <button class="btn" type="submit">Cadastrar maquina</button>
+        </form>
+
+        <div id="listaMaquinas" class="machine-grid"></div>
+      </article>
+    </section>
+
+    <section id="painel" class="tab-panel">
+      <article class="profile card">
+        <img id="perfilFoto" src="https://images.unsplash.com/photo-1592878849122-5f7735d83654?auto=format&fit=crop&w=240&q=80" alt="Foto do produtor">
+        <div>
+          <h2 id="perfilNome">Produtor AgroJusto</h2>
+          <p id="perfilRegiao">Regiao nao informada</p>
+          <p id="perfilBio" class="muted">Atualize seu perfil para personalizar o painel.</p>
+        </div>
+      </article>
+
+      <article class="grid-3">
+        <div class="card mini">
+          <h3>Produtos cadastrados</h3>
+          <strong id="kpiProdutos">0</strong>
+        </div>
+        <div class="card mini">
+          <h3>Maquinas anunciadas</h3>
+          <strong id="kpiMaquinas">0</strong>
+        </div>
+        <div class="card mini">
+          <h3>Preco ideal medio</h3>
+          <strong id="kpiPreco">R$ 0,00</strong>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>Painel de Analise Simples</h2>
+        <button id="btnExportPdf" class="btn secondary" type="button">Exportar relatorio em PDF</button>
+        <div class="chart-grid">
+          <div>
+            <h3>Gastos de producao</h3>
+            <canvas id="chartCustos"></canvas>
+          </div>
+          <div>
+            <h3>Comparacao de precos</h3>
+            <canvas id="chartPreco"></canvas>
+          </div>
+        </div>
+      </article>
+    </section>
+    </main>
+  </div>
+
+  <dialog id="profileModal">
+    <form id="formPerfil" method="dialog" class="profile-form">
+      <h2>Editar Perfil</h2>
+      <label>Nome
+        <input id="perfilNomeInput" type="text" required>
+      </label>
+      <label>Regiao
+        <input id="perfilRegiaoInput" type="text" required>
+      </label>
+      <label>Bio
+        <textarea id="perfilBioInput" rows="3" required></textarea>
+      </label>
+      <label>URL da foto
+        <input id="perfilFotoInput" type="url" placeholder="https://...">
+      </label>
+      <div class="modal-actions">
+        <button class="btn ghost" value="cancel" type="submit">Cancelar</button>
+        <button class="btn" value="default" type="button" id="saveProfile">Salvar perfil</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
