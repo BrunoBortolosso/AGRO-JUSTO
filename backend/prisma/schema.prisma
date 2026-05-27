@@ -1,0 +1,137 @@
+// schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────
+
+enum TipoUsuario {
+  PRODUTOR
+  COMPRADOR
+  AMBOS
+}
+
+enum TipoCusto {
+  INSUMO
+  MAO_DE_OBRA
+  TRANSPORTE
+  MANUTENCAO
+  OUTRO
+}
+
+enum StatusAluguel {
+  ATIVO
+  CONCLUIDO
+  CANCELADO
+}
+
+// ─── Models ───────────────────────────────────────────
+
+model Usuario {
+  id           String      @id @default(uuid())
+  nome         String
+  email        String      @unique
+  senha        String
+  tipoUsuario  TipoUsuario
+  telefone     String?
+  dataCadastro DateTime    @default(now())
+
+  produtos                 Produto[]
+  equipamentos             Equipamento[]
+  alugueis_como_locador    Aluguel[]     @relation("locador")
+  alugueis_como_locatario  Aluguel[]     @relation("locatario")
+
+  @@map("usuarios")
+}
+
+model Produto {
+  id             String   @id @default(uuid())
+  usuarioId      String
+  nome           String
+  quantidade     Decimal  @db.Decimal(10, 3)
+  unidadeMedida  String   // kg, ton, caixa, saca
+  tipoCultivo    String   // organico | convencional
+  regiao         String?
+  descricao      String?  @db.Text
+  dataCadastro   DateTime @default(now())
+
+  usuario      Usuario      @relation(fields: [usuarioId], references: [id])
+  custos       Custo[]
+  precosJustos PrecoJusto[]
+
+  @@map("produtos")
+}
+
+model Custo {
+  id               String    @id @default(uuid())
+  produtoId        String
+  tipo             TipoCusto
+  descricao        String
+  valor            Decimal   @db.Decimal(10, 2)
+  quantidadeInsumo Decimal?  @db.Decimal(10, 3) // ex: 50 kg de fertilizante
+  unidadeInsumo    String?                       // ex: "kg", "L", "unidade"
+  dataInicio       DateTime?
+  dataFim          DateTime?
+  dataRegistro     DateTime  @default(now())
+
+  produto Produto @relation(fields: [produtoId], references: [id])
+
+  @@map("custos")
+}
+
+model PrecoJusto {
+  id                  String   @id @default(uuid())
+  produtoId           String
+  custoTotal          Decimal  @db.Decimal(10, 2) // soma dos custos no momento do cálculo
+  margemLucro         Decimal  @db.Decimal(5, 2)  // percentual: ex: 20.00 = 20%
+  precoMinimo         Decimal  @db.Decimal(10, 2)
+  precoIdeal          Decimal  @db.Decimal(10, 2)
+  quantidadeProduzida Decimal  @db.Decimal(10, 3)
+  moeda               String   @default("BRL")
+  dataCalculo         DateTime @default(now())
+
+  produto Produto @relation(fields: [produtoId], references: [id])
+
+  @@map("precos_justos")
+}
+
+model Equipamento {
+  id              String   @id @default(uuid())
+  usuarioId       String
+  nome            String
+  descricao       String?  @db.Text
+  tipo            String
+  valorDia        Decimal  @db.Decimal(10, 2)
+  disponibilidade Boolean  @default(true)
+  dataCadastro    DateTime @default(now())
+
+  usuario  Usuario   @relation(fields: [usuarioId], references: [id])
+  alugueis Aluguel[]
+
+  @@map("equipamentos")
+}
+
+model Aluguel {
+  id            String        @id @default(uuid())
+  equipamentoId String
+  locadorId     String
+  locatarioId   String
+  dataInicio    DateTime
+  dataFim       DateTime
+  valorDiaria   Decimal       @db.Decimal(10, 2) // preço negociado nesse contrato
+  valorTotal    Decimal       @db.Decimal(10, 2)
+  status        StatusAluguel @default(ATIVO)
+  observacoes   String?       @db.Text
+
+  equipamento Equipamento @relation(fields: [equipamentoId], references: [id])
+  locador     Usuario     @relation("locador",   fields: [locadorId],   references: [id])
+  locatario   Usuario     @relation("locatario", fields: [locatarioId], references: [id])
+
+  @@map("alugueis")
+}
