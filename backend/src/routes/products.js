@@ -1,5 +1,5 @@
-const express = require("express");
-const { prisma } = require("../db/prisma");
+import express from "express";
+import { prisma } from "../db/prisma.js";
 
 const router = express.Router();
 
@@ -29,15 +29,22 @@ router.post("/", async (req, res) => {
   const unidade = String(req.body?.unidade || "").trim();
   const preco = req.body?.preco;
 
-  if (!nome) return res.status(400).json({ error: "Campo 'nome' é obrigatório." });
-  if (!unidade) return res.status(400).json({ error: "Campo 'unidade' é obrigatório." });
+  if (!nome)
+    return res.status(400).json({ error: "Campo 'nome' é obrigatório." });
+  if (!unidade)
+    return res.status(400).json({ error: "Campo 'unidade' é obrigatório." });
 
   const product = await prisma.product.create({
     data: {
       nome,
-      quantidade: Number.isFinite(quantidade) ? Math.max(0, Math.trunc(quantidade)) : 0,
+      quantidade: Number.isFinite(quantidade)
+        ? Math.max(0, Math.trunc(quantidade))
+        : 0,
       unidade,
-      preco: preco === null || preco === undefined || preco === "" ? null : Number(preco)
+      preco:
+        preco === null || preco === undefined || preco === ""
+          ? null
+          : Number(preco)
     },
     select: {
       id: true,
@@ -60,9 +67,12 @@ router.patch("/:id", async (req, res) => {
   if (req.body?.nome !== undefined) data.nome = String(req.body.nome).trim();
   if (req.body?.quantidade !== undefined) {
     const quantidade = Number(req.body.quantidade);
-    data.quantidade = Number.isFinite(quantidade) ? Math.max(0, Math.trunc(quantidade)) : 0;
+    data.quantidade = Number.isFinite(quantidade)
+      ? Math.max(0, Math.trunc(quantidade))
+      : 0;
   }
-  if (req.body?.unidade !== undefined) data.unidade = String(req.body.unidade).trim();
+  if (req.body?.unidade !== undefined)
+    data.unidade = String(req.body.unidade).trim();
   if (req.body?.preco !== undefined) {
     const preco = req.body.preco;
     data.preco = preco === null || preco === "" ? null : Number(preco);
@@ -105,4 +115,4 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-module.exports = { productsRouter: router };
+export const productsRouter = router;

@@ -1,7 +1,7 @@
-const express = require("express");
-const cors = require("cors");
+import express from "express";
+import cors from "cors";
 
-const { productsRouter } = require("./routes/products");
+import { productsRouter } from "./routes/products.js";
 
 function createApp() {
   const app = express();
@@ -24,4 +24,4 @@ function createApp() {
   return app;
 }
 
-module.exports = { createApp };
+export { createApp };
