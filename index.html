@@ -37,18 +37,49 @@
 
   <section id="authGate" class="auth-gate">
     <article class="auth-card card">
-      <h2>Entrar no AgroJusto</h2>
-      <p class="muted">Login simulado para demonstracao do TCC.</p>
+      <div class="auth-heading">
+        <span class="auth-kicker">Acesso do produtor</span>
+        <h2 id="authTitle">Entrar no AgroJusto</h2>
+        <p id="authSubtitle" class="muted">Acesse sua conta para cuidar da sua producao.</p>
+      </div>
+      <div class="auth-switch" role="tablist" aria-label="Modo de acesso">
+        <button id="loginMode" class="auth-switch-btn active" type="button" role="tab" aria-selected="true">Entrar</button>
+        <button id="registerMode" class="auth-switch-btn" type="button" role="tab" aria-selected="false">Criar conta</button>
+      </div>
       <form id="loginForm" class="auth-form">
         <label>
           E-mail
-          <input id="loginEmail" type="email" required placeholder="produtor@agrojusto.com">
+          <input id="loginEmail" type="email" autocomplete="email" required placeholder="produtor@agrojusto.com">
         </label>
         <label>
           Senha
-          <input id="loginSenha" type="password" required placeholder="123456">
+          <input id="loginSenha" type="password" autocomplete="current-password" required placeholder="Digite sua senha">
         </label>
-        <button class="btn" type="submit">Entrar</button>
+        <button class="btn" type="submit">Entrar na conta</button>
+      </form>
+      <form id="registerForm" class="auth-form hidden">
+        <label>
+          Nome do produtor
+          <input id="registerName" type="text" autocomplete="name" required placeholder="Ex: Maria da Silva">
+        </label>
+        <label>
+          E-mail
+          <input id="registerEmail" type="email" autocomplete="email" required placeholder="voce@email.com">
+        </label>
+        <label>
+          Senha
+          <input id="registerPassword" type="password" autocomplete="new-password" minlength="6" required placeholder="Crie uma senha segura">
+        </label>
+        <div id="passwordStrength" class="password-strength" aria-live="polite">
+          <div class="password-strength-bar"><span></span></div>
+          <strong id="passwordStrengthText">Digite uma senha</strong>
+          <small>Use letras maiusculas, minusculas, numeros e simbolos.</small>
+        </div>
+        <label>
+          Confirmar senha
+          <input id="registerPasswordConfirm" type="password" autocomplete="new-password" minlength="6" required placeholder="Repita sua senha">
+        </label>
+        <button class="btn" type="submit">Criar minha conta</button>
       </form>
       <button id="btnDemoLogin" class="btn secondary" type="button">Entrar com dados de demonstracao</button>
       <p id="authMessage" class="badge auth-message hidden"></p>
@@ -128,6 +159,14 @@
             <input id="custoKm" type="number" min="0" step="0.01" value="2.50">
           </label>
           <label>
+            Quantidade produzida (unidades)
+            <input id="quantidadeProduzida" type="number" min="0.01" step="0.01" required placeholder="Ex: 100">
+          </label>
+          <label>
+            Margem de seguranca (%)
+            <input id="margemLucro" type="number" min="0" step="0.1" value="10" required>
+          </label>
+          <label>
             Oferta regional
             <select id="oferta">
               <option value="baixa">Baixa</option>
@@ -149,14 +188,47 @@
 
         <div id="resultadoPreco" class="result-box hidden" aria-live="polite">
           <div>
-            <span>Preco minimo</span>
+            <span>Preco minimo por unidade</span>
             <strong id="precoMinimo">R$ 0,00</strong>
           </div>
           <div>
-            <span>Preco ideal</span>
+            <span>Preco ideal por unidade</span>
             <strong id="precoIdeal">R$ 0,00</strong>
           </div>
           <p id="resumoMercado" class="badge"></p>
+        </div>
+
+        <div class="cost-history">
+          <h3>Registro de custos</h3>
+          <form id="formCusto" class="form-grid">
+            <label>
+              Categoria
+              <select id="custoCategoria">
+                <option value="insumos">Insumos</option>
+                <option value="mao">Mao de obra</option>
+                <option value="transporteBase">Transporte</option>
+                <option value="manutencao">Manutencao</option>
+              </select>
+            </label>
+            <label>
+              Descricao
+              <input id="custoDescricao" type="text" required placeholder="Ex: Adubo organico">
+            </label>
+            <label>
+              Valor (R$)
+              <input id="custoValor" type="number" min="0.01" step="0.01" required placeholder="0,00">
+            </label>
+            <label>
+              Data
+              <input id="custoData" type="date" required>
+            </label>
+            <button class="btn secondary" type="submit">Salvar custo</button>
+          </form>
+          <div class="cost-summary">
+            <strong>Total registrado: <span id="totalCustos">R$ 0,00</span></strong>
+            <button id="btnAplicarCustos" class="btn ghost" type="button">Usar no calculo</button>
+          </div>
+          <div id="listaCustos" class="stack"></div>
         </div>
       </article>
     </section>
@@ -246,6 +318,10 @@
         </form>
 
         <div id="listaMaquinas" class="machine-grid"></div>
+        <div class="rental-history">
+          <h3>Historico de alugueis</h3>
+          <div id="listaAlugueis" class="stack"></div>
+        </div>
       </article>
     </section>
 
@@ -291,6 +367,34 @@
     </section>
     </main>
   </div>
+
+  <dialog id="rentalModal">
+    <form id="rentalForm" class="profile-form">
+      <h2>Registrar aluguel</h2>
+      <p id="rentalMachineName" class="muted"></p>
+      <input id="rentalMachineId" type="hidden">
+      <label>
+        Nome do locatario
+        <input id="rentalTenant" type="text" required placeholder="Ex: Joao da Silva">
+      </label>
+      <label>
+        Data de inicio
+        <input id="rentalStart" type="date" required>
+      </label>
+      <label>
+        Data de devolucao
+        <input id="rentalEnd" type="date" required>
+      </label>
+      <label>
+        Observacoes
+        <textarea id="rentalNotes" rows="3" placeholder="Ex: Retirar na propriedade do produtor"></textarea>
+      </label>
+      <div class="modal-actions">
+        <button id="cancelRental" class="btn ghost" type="button">Cancelar</button>
+        <button class="btn" type="submit">Confirmar aluguel</button>
+      </div>
+    </form>
+  </dialog>
 
   <dialog id="profileModal">
     <form id="formPerfil" method="dialog" class="profile-form">

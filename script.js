@@ -1,8 +1,11 @@
 const storageKeys = {
   auth: "agrojusto.auth",
+  users: "agrojusto.users",
   profile: "agrojusto.profile",
   products: "agrojusto.products",
   machines: "agrojusto.machines",
+  rentals: "agrojusto.rentals",
+  costs: "agrojusto.costs",
   pricing: "agrojusto.pricingHistory"
 };
 
@@ -306,10 +309,13 @@ let chartCustos;
 let chartPreco;
 
 const state = {
-  auth: readData(storageKeys.auth, { loggedIn: false, email: "" }),
+  auth: normalizeAuth(readData(storageKeys.auth, { loggedIn: false, email: "" })),
+  users: readData(storageKeys.users, []),
   profile: readData(storageKeys.profile, defaultProfile),
   products: readData(storageKeys.products, defaultProducts),
   machines: readData(storageKeys.machines, defaultMachines),
+  rentals: readData(storageKeys.rentals, []),
+  costs: readData(storageKeys.costs, []),
   pricingHistory: readData(storageKeys.pricing, [])
 };
 
@@ -321,6 +327,13 @@ function readData(key, fallback) {
   } catch {
     return fallback;
   }
+}
+
+function normalizeAuth(auth) {
+  if (!auth || auth.loggedIn !== true || typeof auth.email !== "string") {
+    return { loggedIn: false, email: "" };
+  }
+  return { loggedIn: true, email: auth.email.trim().toLowerCase() };
 }
 
 function writeData(key, value) {
@@ -401,7 +414,7 @@ function applyAuthState() {
   const openProfile = document.getElementById("openProfileModal");
   const userChip = document.getElementById("loggedUser");
 
-  if (state.auth.loggedIn) {
+  if (state.auth.loggedIn === true) {
     appShell.classList.remove("hidden");
     authGate.classList.add("hidden");
     btnLogout.classList.remove("hidden");
@@ -416,29 +429,120 @@ function applyAuthState() {
   }
 }
 
+function getPasswordStrength(password) {
+  const hasLower = /[a-z]/.test(password);
+  const hasUpper = /[A-Z]/.test(password);
+  const hasNumber = /\d/.test(password);
+  const hasSymbol = /[^A-Za-z0-9]/.test(password);
+  const types = [hasLower, hasUpper, hasNumber, hasSymbol].filter(Boolean).length;
+
+  if (password.length < 8 || types <= 1) return { level: "fraca", score: 1 };
+  if (password.length < 10 || types < 4) return { level: "media", score: 2 };
+  return { level: "forte", score: 3 };
+}
+
+function updatePasswordStrength(password) {
+  const strength = getPasswordStrength(password);
+  const container = document.getElementById("passwordStrength");
+  const text = document.getElementById("passwordStrengthText");
+  const bar = container.querySelector("span");
+
+  container.className = `password-strength ${strength.level}`;
+  bar.style.width = `${strength.score * 33.333}%`;
+  text.textContent = password ? `Senha ${strength.level}` : "Digite uma senha";
+}
+
+function finishLogin(account) {
+  state.auth = { loggedIn: true, email: account.email };
+  writeData(storageKeys.auth, state.auth);
+  state.profile = { ...state.profile, nome: account.nome };
+  writeData(storageKeys.profile, state.profile);
+  setAuthMessage("Login realizado com sucesso.", false);
+  updateHeaderUser();
+  applyAuthState();
+  refreshPanel();
+}
+
 function login(email, senha) {
   const cleanEmail = email.trim().toLowerCase();
+  const account = state.users.find((user) => user.email === cleanEmail && user.senha === senha);
+
   if (cleanEmail === demoLogin.email && senha === demoLogin.senha) {
-    state.auth = { loggedIn: true, email: cleanEmail };
-    writeData(storageKeys.auth, state.auth);
-    setAuthMessage("Login realizado com sucesso.", false);
-    updateHeaderUser();
-    applyAuthState();
-    refreshPanel();
+    finishLogin({ email: cleanEmail, nome: "Produtor AgroJusto" });
     return;
   }
-  setAuthMessage("Credenciais invalidas. Use o acesso de demonstracao.", true);
+
+  if (account) {
+    finishLogin(account);
+    return;
+  }
+
+  setAuthMessage("E-mail ou senha invalidos.", true);
+}
+
+function registerAccount(nome, email, senha, confirmacao) {
+  const cleanName = nome.trim();
+  const cleanEmail = email.trim().toLowerCase();
+  const strength = getPasswordStrength(senha);
+
+  if (state.users.some((user) => user.email === cleanEmail) || cleanEmail === demoLogin.email) {
+    setAuthMessage("Este e-mail ja possui uma conta.", true);
+    return;
+  }
+  if (strength.level === "fraca") {
+    setAuthMessage("Escolha uma senha media ou forte.", true);
+    return;
+  }
+  if (senha !== confirmacao) {
+    setAuthMessage("As senhas nao coincidem.", true);
+    return;
+  }
+
+  const account = { id: crypto.randomUUID(), nome: cleanName, email: cleanEmail, senha };
+  state.users.push(account);
+  writeData(storageKeys.users, state.users);
+  finishLogin(account);
+}
+
+function setAuthMode(mode) {
+  const isRegister = mode === "register";
+  document.getElementById("loginForm").classList.toggle("hidden", isRegister);
+  document.getElementById("registerForm").classList.toggle("hidden", !isRegister);
+  document.getElementById("loginMode").classList.toggle("active", !isRegister);
+  document.getElementById("registerMode").classList.toggle("active", isRegister);
+  document.getElementById("loginMode").setAttribute("aria-selected", String(!isRegister));
+  document.getElementById("registerMode").setAttribute("aria-selected", String(isRegister));
+  document.getElementById("authTitle").textContent = isRegister ? "Criar sua conta" : "Entrar no AgroJusto";
+  document.getElementById("authSubtitle").textContent = isRegister
+    ? "Salve seus dados para acessar o painel do produtor."
+    : "Acesse sua conta para cuidar da sua producao.";
+  document.getElementById("authMessage").classList.add("hidden");
 }
 
 function setupAuth() {
   document.getElementById("loginForm").addEventListener("submit", (event) => {
     event.preventDefault();
-    const email = document.getElementById("loginEmail").value;
-    const senha = document.getElementById("loginSenha").value;
-    login(email, senha);
+    login(document.getElementById("loginEmail").value, document.getElementById("loginSenha").value);
   });
 
+  document.getElementById("registerForm").addEventListener("submit", (event) => {
+    event.preventDefault();
+    registerAccount(
+      document.getElementById("registerName").value,
+      document.getElementById("registerEmail").value,
+      document.getElementById("registerPassword").value,
+      document.getElementById("registerPasswordConfirm").value
+    );
+  });
+
+  document.getElementById("registerPassword").addEventListener("input", (event) => {
+    updatePasswordStrength(event.target.value);
+  });
+  document.getElementById("loginMode").addEventListener("click", () => setAuthMode("login"));
+  document.getElementById("registerMode").addEventListener("click", () => setAuthMode("register"));
+
   document.getElementById("btnDemoLogin").addEventListener("click", () => {
+    setAuthMode("login");
     document.getElementById("loginEmail").value = demoLogin.email;
     document.getElementById("loginSenha").value = demoLogin.senha;
     login(demoLogin.email, demoLogin.senha);
@@ -450,6 +554,7 @@ function setupAuth() {
     applyAuthState();
   });
 
+  updatePasswordStrength("");
   updateHeaderUser();
   applyAuthState();
 }
@@ -487,24 +592,36 @@ function pricingMultiplier(oferta, demanda) {
 }
 
 function calculatePricing() {
-  const insumos = Number(document.getElementById("insumos").value) || 0;
-  const mao = Number(document.getElementById("maoDeObra").value) || 0;
-  const transporteBase = Number(document.getElementById("transporteBase").value) || 0;
-  const manutencao = Number(document.getElementById("manutencao").value) || 0;
-  const distancia = Number(document.getElementById("distanciaKm").value) || 0;
-  const custoKm = Number(document.getElementById("custoKm").value) || 0;
+  const nonNegativeNumber = (id) => Math.max(0, Number(document.getElementById(id).value) || 0);
+  const insumos = nonNegativeNumber("insumos");
+  const mao = nonNegativeNumber("maoDeObra");
+  const transporteBase = nonNegativeNumber("transporteBase");
+  const manutencao = nonNegativeNumber("manutencao");
+  const distancia = nonNegativeNumber("distanciaKm");
+  const custoKm = nonNegativeNumber("custoKm");
+  const quantidade = nonNegativeNumber("quantidadeProduzida");
+  const margem = nonNegativeNumber("margemLucro");
   const oferta = document.getElementById("oferta").value;
   const demanda = document.getElementById("demanda").value;
 
+  if (quantidade <= 0) {
+    document.getElementById("resultadoPreco").classList.remove("hidden");
+    document.getElementById("resumoMercado").textContent = "Informe uma quantidade produzida maior que zero.";
+    return;
+  }
+
   const custoDistancia = distancia * custoKm;
   const custoTotal = insumos + mao + transporteBase + manutencao + custoDistancia;
-  const precoMinimo = custoTotal * 1.1;
+  const custoUnitario = custoTotal / quantidade;
+  const precoMinimo = custoUnitario * (1 + margem / 100);
   const multip = pricingMultiplier(oferta, demanda);
   const precoIdeal = precoMinimo * multip;
 
   document.getElementById("precoMinimo").textContent = money(precoMinimo);
   document.getElementById("precoIdeal").textContent = money(precoIdeal);
-  document.getElementById("resumoMercado").textContent = `Custo total: ${money(custoTotal)}. Ajuste de mercado: ${(multip * 100).toFixed(0)}%.`;
+  const ajusteMercado = ((multip - 1) * 100).toFixed(0);
+  const sinalAjuste = ajusteMercado > 0 ? "+" : "";
+  document.getElementById("resumoMercado").textContent = `Custo total: ${money(custoTotal)} | Custo por unidade: ${money(custoUnitario)} | Ajuste de mercado: ${sinalAjuste}${ajusteMercado}%.`;
   document.getElementById("resultadoPreco").classList.remove("hidden");
 
   state.pricingHistory.push({
@@ -513,14 +630,99 @@ function calculatePricing() {
     manutencao,
     transporteBase,
     custoDistancia,
+    custoTotal,
+    quantidade,
+    margem,
+    custoUnitario,
     precoMinimo,
     precoIdeal,
+    oferta,
+    demanda,
     createdAt: new Date().toISOString()
   });
 
   state.pricingHistory = state.pricingHistory.slice(-20);
   writeData(storageKeys.pricing, state.pricingHistory);
   refreshPanel();
+}
+
+function renderCosts() {
+  const container = document.getElementById("listaCustos");
+  const total = state.costs.reduce((sum, cost) => sum + (Number(cost.valor) || 0), 0);
+  document.getElementById("totalCustos").textContent = money(total);
+
+  if (!state.costs.length) {
+    container.innerHTML = '<p class="muted">Nenhum custo registrado.</p>';
+    return;
+  }
+
+  container.innerHTML = state.costs
+    .slice()
+    .reverse()
+    .map((cost) => `
+      <div class="cost-row">
+        <div>
+          <strong>${cost.descricao}</strong>
+          <p class="muted">${cost.categoriaLabel} | ${cost.data}</p>
+        </div>
+        <div class="cost-actions">
+          <strong>${money(cost.valor)}</strong>
+          <button class="btn ghost" type="button" data-delete-cost="${cost.id}">Excluir</button>
+        </div>
+      </div>
+    `)
+    .join("");
+
+  container.querySelectorAll("[data-delete-cost]").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.costs = state.costs.filter((cost) => cost.id !== button.dataset.deleteCost);
+      writeData(storageKeys.costs, state.costs);
+      renderCosts();
+    });
+  });
+}
+
+function setupCostForm() {
+  const dateInput = document.getElementById("custoData");
+  dateInput.value = new Date().toISOString().slice(0, 10);
+
+  document.getElementById("formCusto").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const category = document.getElementById("custoCategoria").value;
+    const labels = {
+      insumos: "Insumos",
+      mao: "Mao de obra",
+      transporteBase: "Transporte",
+      manutencao: "Manutencao"
+    };
+    const cost = {
+      id: crypto.randomUUID(),
+      categoria: category,
+      categoriaLabel: labels[category],
+      descricao: document.getElementById("custoDescricao").value.trim(),
+      valor: Math.max(0, Number(document.getElementById("custoValor").value) || 0),
+      data: dateInput.value
+    };
+
+    if (!cost.descricao || cost.valor <= 0 || !cost.data) return;
+    state.costs.push(cost);
+    writeData(storageKeys.costs, state.costs);
+    event.target.reset();
+    dateInput.value = new Date().toISOString().slice(0, 10);
+    renderCosts();
+  });
+
+  document.getElementById("btnAplicarCustos").addEventListener("click", () => {
+    const totals = { insumos: 0, mao: 0, transporteBase: 0, manutencao: 0 };
+    state.costs.forEach((cost) => {
+      if (totals[cost.categoria] !== undefined) totals[cost.categoria] += Number(cost.valor) || 0;
+    });
+    Object.entries(totals).forEach(([field, total]) => {
+      document.getElementById(field === "mao" ? "maoDeObra" : field).value = total.toFixed(2);
+    });
+    document.getElementById("resumoMercado").textContent = "Custos registrados aplicados ao calculo.";
+    document.getElementById("resultadoPreco").classList.remove("hidden");
+  });
 }
 
 function renderProducts() {
@@ -596,8 +798,65 @@ function machineStatusBadge(status) {
   return "disponivel";
 }
 
+function rentalDays(start, end) {
+  const startDate = new Date(`${start}T00:00:00Z`);
+  const endDate = new Date(`${end}T00:00:00Z`);
+  return Math.ceil((endDate - startDate) / 86400000) + 1;
+}
+
+function renderRentals() {
+  const container = document.getElementById("listaAlugueis");
+  const rentals = state.rentals.slice().reverse();
+
+  if (!rentals.length) {
+    container.innerHTML = '<p class="muted">Nenhum aluguel registrado.</p>';
+    return;
+  }
+
+  container.innerHTML = rentals
+    .map((rental) => `
+      <div class="rental-row">
+        <div>
+          <strong>${rental.machineName}</strong>
+          <p class="muted">Locatario: ${rental.tenant} | ${rental.start} a ${rental.end}</p>
+          ${rental.notes ? `<p class="muted">${rental.notes}</p>` : ""}
+        </div>
+        <div class="rental-total">
+          <strong>${money(rental.total)}</strong>
+          <span class="status ${rental.status === "ativo" ? "alugado" : "disponivel"}">${rental.status.toUpperCase()}</span>
+        </div>
+      </div>
+    `)
+    .join("");
+}
+
+function openRentalModal(machine) {
+  document.getElementById("rentalForm").reset();
+  document.getElementById("rentalMachineId").value = machine.id;
+  document.getElementById("rentalMachineName").textContent = `${machine.nome} - ${money(machine.preco)} por dia`;
+  document.getElementById("rentalStart").value = new Date().toISOString().slice(0, 10);
+  document.getElementById("rentalEnd").value = new Date().toISOString().slice(0, 10);
+  document.getElementById("rentalModal").showModal();
+}
+
+function finishRental(machine) {
+  const rental = state.rentals.find((item) => item.machineId === machine.id && item.status === "ativo");
+  state.machines = state.machines.map((item) => item.id === machine.id ? { ...item, status: "disponivel" } : item);
+  if (rental) rental.status = "encerrado";
+  writeData(storageKeys.machines, state.machines);
+  writeData(storageKeys.rentals, state.rentals);
+  renderMachines();
+  renderRentals();
+  refreshPanel();
+}
+
 function renderMachines() {
   const container = document.getElementById("listaMaquinas");
+
+  if (!state.machines.length) {
+    container.innerHTML = '<p class="muted">Nenhuma maquina cadastrada para aluguel.</p>';
+    return;
+  }
 
   container.innerHTML = state.machines
     .map(
@@ -610,7 +869,8 @@ function renderMachines() {
           <p>${item.condicoes}</p>
           <p><strong>${money(item.preco)}</strong> por dia</p>
           <p class="status ${machineStatusBadge(item.status)}">${item.status.toUpperCase()}</p>
-          <button class="btn secondary" type="button" data-toggle-machine="${item.id}">Alternar status</button>
+          <button class="btn secondary" type="button" data-toggle-machine="${item.id}">${item.status === "alugado" ? "Encerrar aluguel" : "Registrar aluguel"}</button>
+          <button class="btn secondary" type="button" data-delete-machine="${item.id}">Excluir equipamento</button>
         </div>
       </article>
     `
@@ -619,10 +879,19 @@ function renderMachines() {
 
   container.querySelectorAll("[data-toggle-machine]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      state.machines = state.machines.map((machine) => {
-        if (machine.id !== btn.dataset.toggleMachine) return machine;
-        return { ...machine, status: machine.status === "disponivel" ? "alugado" : "disponivel" };
-      });
+      const machine = state.machines.find((item) => item.id === btn.dataset.toggleMachine);
+      if (!machine) return;
+      if (machine.status === "alugado") finishRental(machine);
+      else openRentalModal(machine);
+    });
+  });
+
+  container.querySelectorAll("[data-delete-machine]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const machine = state.machines.find((item) => item.id === btn.dataset.deleteMachine);
+      if (!machine || !window.confirm(`Excluir o equipamento "${machine.nome}"?`)) return;
+
+      state.machines = state.machines.filter((item) => item.id !== btn.dataset.deleteMachine);
       writeData(storageKeys.machines, state.machines);
       renderMachines();
       refreshPanel();
@@ -637,7 +906,7 @@ function setupMachineForm() {
     const machine = {
       id: crypto.randomUUID(),
       nome: document.getElementById("maqNome").value.trim(),
-      preco: Number(document.getElementById("maqPreco").value) || 0,
+      preco: Math.max(0, Number(document.getElementById("maqPreco").value) || 0),
       tipo: document.getElementById("maqTipo").value,
       condicoes: document.getElementById("maqCondicoes").value.trim(),
       dias: document.getElementById("maqDias").value.trim(),
@@ -652,6 +921,45 @@ function setupMachineForm() {
     writeData(storageKeys.machines, state.machines);
     event.target.reset();
     renderMachines();
+    refreshPanel();
+  });
+}
+
+function setupRentalForm() {
+  const modal = document.getElementById("rentalModal");
+  document.getElementById("cancelRental").addEventListener("click", () => modal.close());
+
+  document.getElementById("rentalForm").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const machineId = document.getElementById("rentalMachineId").value;
+    const machine = state.machines.find((item) => item.id === machineId);
+    const start = document.getElementById("rentalStart").value;
+    const end = document.getElementById("rentalEnd").value;
+    const days = rentalDays(start, end);
+
+    if (!machine || days < 1) return;
+
+    state.rentals.push({
+      id: crypto.randomUUID(),
+      machineId,
+      machineName: machine.nome,
+      tenant: document.getElementById("rentalTenant").value.trim(),
+      start,
+      end,
+      days,
+      dailyPrice: machine.preco,
+      total: days * machine.preco,
+      notes: document.getElementById("rentalNotes").value.trim(),
+      status: "ativo",
+      createdAt: new Date().toISOString()
+    });
+
+    state.machines = state.machines.map((item) => item.id === machineId ? { ...item, status: "alugado" } : item);
+    writeData(storageKeys.rentals, state.rentals);
+    writeData(storageKeys.machines, state.machines);
+    modal.close();
+    renderMachines();
+    renderRentals();
     refreshPanel();
   });
 }
@@ -691,10 +999,10 @@ function updateProfileView() {
 function aggregatedCosts() {
   const base = { insumos: 0, mao: 0, manutencao: 0, transporte: 0 };
   return state.pricingHistory.reduce((acc, item) => {
-    acc.insumos += item.insumos;
-    acc.mao += item.mao;
-    acc.manutencao += item.manutencao;
-    acc.transporte += item.transporteBase + item.custoDistancia;
+    acc.insumos += Number(item.insumos) || 0;
+    acc.mao += Number(item.mao) || 0;
+    acc.manutencao += Number(item.manutencao) || 0;
+    acc.transporte += (Number(item.transporteBase) || 0) + (Number(item.custoDistancia) || 0);
     return acc;
   }, base);
 }
@@ -702,7 +1010,10 @@ function aggregatedCosts() {
 function latestPriceComparison() {
   const last = state.pricingHistory[state.pricingHistory.length - 1];
   if (!last) return { minimo: 0, ideal: 0 };
-  return { minimo: last.precoMinimo, ideal: last.precoIdeal };
+  return {
+    minimo: Number(last.precoMinimo) || 0,
+    ideal: Number(last.precoIdeal) || 0
+  };
 }
 
 function refreshKPIs() {
@@ -710,7 +1021,7 @@ function refreshKPIs() {
   document.getElementById("kpiMaquinas").textContent = String(state.machines.length);
 
   const averageIdeal =
-    state.pricingHistory.reduce((sum, row) => sum + row.precoIdeal, 0) /
+    state.pricingHistory.reduce((sum, row) => sum + (Number(row.precoIdeal) || 0), 0) /
     (state.pricingHistory.length || 1);
 
   document.getElementById("kpiPreco").textContent = money(averageIdeal);
@@ -745,7 +1056,7 @@ function mountCharts() {
   chartPreco = new Chart(document.getElementById("chartPreco"), {
     type: "bar",
     data: {
-      labels: ["Preco minimo", "Preco ideal"],
+      labels: ["Preco minimo por unidade", "Preco ideal por unidade"],
       datasets: [
         {
           data: [comparacao.minimo, comparacao.ideal],
@@ -817,9 +1128,9 @@ function exportReportPdf() {
   doc.text("Precificacao", 14, y);
   y += line;
   doc.setFontSize(11);
-  doc.text(`Preco minimo mais recente: ${money(latest.minimo)}`, 14, y);
+  doc.text(`Preco minimo por unidade mais recente: ${money(latest.minimo)}`, 14, y);
   y += line;
-  doc.text(`Preco ideal mais recente: ${money(latest.ideal)}`, 14, y);
+  doc.text(`Preco ideal por unidade mais recente: ${money(latest.ideal)}`, 14, y);
 
   y += line + 2;
   doc.setFontSize(13);
@@ -842,6 +1153,8 @@ function init() {
   setupTabs();
   setupProductForm();
   setupMachineForm();
+  setupRentalForm();
+  setupCostForm();
   setupProfile();
   ensureCatalogMedia();
 
@@ -850,6 +1163,8 @@ function init() {
 
   renderProducts();
   renderMachines();
+  renderRentals();
+  renderCosts();
   refreshPanel();
 }
 

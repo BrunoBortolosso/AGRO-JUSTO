@@ -7,61 +7,79 @@ function parseIdParam(req) {
   return String(req.params.id || "").trim();
 }
 
-router.get("/", async (_req, res) => {
-  const products = await prisma.product.findMany({
-    orderBy: { createdAt: "desc" },
+function getUserId(req) {
+  return String(req.headers["x-user-id"] || process.env.DEFAULT_USER_ID || "").trim();
+}
+
+function serializeProduct(product) {
+  return {
+    id: product.id,
+    nome: product.nome,
+    quantidade: product.quantidade,
+    unidade: product.unidadeMedida,
+    preco: null,
+    createdAt: product.dataCadastro
+  };
+}
+
+router.get("/", async (req, res) => {
+  const usuarioId = getUserId(req);
+  if (!usuarioId) return res.status(503).json({ error: "Configure DEFAULT_USER_ID para acessar produtos." });
+
+  const products = await prisma.produto.findMany({
+    where: { usuarioId },
+    orderBy: { dataCadastro: "desc" },
     select: {
       id: true,
       nome: true,
       quantidade: true,
-      unidade: true,
-      preco: true,
-      createdAt: true
+      unidadeMedida: true,
+      dataCadastro: true
     }
   });
 
-  res.json(products);
+  res.json(products.map(serializeProduct));
 });
 
 router.post("/", async (req, res) => {
+  const usuarioId = getUserId(req);
+  if (!usuarioId) return res.status(503).json({ error: "Configure DEFAULT_USER_ID para cadastrar produtos." });
   const nome = String(req.body?.nome || "").trim();
   const quantidade = Number(req.body?.quantidade ?? 0);
   const unidade = String(req.body?.unidade || "").trim();
-  const preco = req.body?.preco;
 
   if (!nome)
     return res.status(400).json({ error: "Campo 'nome' é obrigatório." });
   if (!unidade)
     return res.status(400).json({ error: "Campo 'unidade' é obrigatório." });
 
-  const product = await prisma.product.create({
+  const product = await prisma.produto.create({
     data: {
+      usuarioId,
       nome,
       quantidade: Number.isFinite(quantidade)
         ? Math.max(0, Math.trunc(quantidade))
         : 0,
-      unidade,
-      preco:
-        preco === null || preco === undefined || preco === ""
-          ? null
-          : Number(preco)
+      unidadeMedida: unidade,
+      tipoCultivo: "convencional"
     },
     select: {
       id: true,
       nome: true,
       quantidade: true,
-      unidade: true,
-      preco: true,
-      createdAt: true
+      unidadeMedida: true,
+      dataCadastro: true
     }
   });
 
-  res.status(201).json(product);
+  res.status(201).json(serializeProduct(product));
 });
 
 router.patch("/:id", async (req, res) => {
   const id = parseIdParam(req);
   if (!id) return res.status(400).json({ error: "Parâmetro 'id' inválido." });
+  const usuarioId = getUserId(req);
+  if (!usuarioId) return res.status(503).json({ error: "Configure DEFAULT_USER_ID para editar produtos." });
 
   const data = {};
   if (req.body?.nome !== undefined) data.nome = String(req.body.nome).trim();
@@ -71,27 +89,19 @@ router.patch("/:id", async (req, res) => {
       ? Math.max(0, Math.trunc(quantidade))
       : 0;
   }
-  if (req.body?.unidade !== undefined)
-    data.unidade = String(req.body.unidade).trim();
-  if (req.body?.preco !== undefined) {
-    const preco = req.body.preco;
-    data.preco = preco === null || preco === "" ? null : Number(preco);
-  }
+  if (req.body?.unidade !== undefined) data.unidadeMedida = String(req.body.unidade).trim();
 
   try {
-    const product = await prisma.product.update({
-      where: { id },
+    const product = await prisma.produto.updateMany({
+      where: { id, usuarioId },
       data,
-      select: {
-        id: true,
-        nome: true,
-        quantidade: true,
-        unidade: true,
-        preco: true,
-        createdAt: true
-      }
     });
-    res.json(product);
+    if (!product.count) return res.status(404).json({ error: "Produto não encontrado." });
+    const updated = await prisma.produto.findUnique({
+      where: { id },
+      select: { id: true, nome: true, quantidade: true, unidadeMedida: true, dataCadastro: true }
+    });
+    res.json(serializeProduct(updated));
   } catch (e) {
     if (e?.code === "P2025") {
       return res.status(404).json({ error: "Produto não encontrado." });
@@ -103,9 +113,12 @@ router.patch("/:id", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   const id = parseIdParam(req);
   if (!id) return res.status(400).json({ error: "Parâmetro 'id' inválido." });
+  const usuarioId = getUserId(req);
+  if (!usuarioId) return res.status(503).json({ error: "Configure DEFAULT_USER_ID para excluir produtos." });
 
   try {
-    await prisma.product.delete({ where: { id } });
+    const product = await prisma.produto.deleteMany({ where: { id, usuarioId } });
+    if (!product.count) return res.status(404).json({ error: "Produto não encontrado." });
     res.status(204).send();
   } catch (e) {
     if (e?.code === "P2025") {

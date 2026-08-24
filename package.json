@@ -1,0 +1,27 @@
+{
+  "name": "agro-justo",
+  "version": "1.0.0",
+  "description": "Plataforma voltada ao pequeno produtor rural para **precificação justa**, **cadastro de produtos** e **aluguel colaborativo de máquinas**.",
+  "main": "script.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BrunoBortolosso/AGRO-JUSTO.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/BrunoBortolosso/AGRO-JUSTO/issues"
+  },
+  "homepage": "https://github.com/BrunoBortolosso/AGRO-JUSTO#readme",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}

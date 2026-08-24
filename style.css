@@ -101,14 +101,137 @@ h3 {
   border: 1px solid #e2e9e4;
 }
 
+.auth-heading {
+  text-align: center;
+}
+
+.auth-kicker {
+  color: var(--leaf);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.auth-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+  margin-top: 1.2rem;
+  padding: 0.3rem;
+  background: #edf4ef;
+  border-radius: 10px;
+}
+
+.auth-switch-btn {
+  border: 0;
+  border-radius: 8px;
+  padding: 0.65rem;
+  background: transparent;
+  color: var(--forest);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+}
+
+.auth-switch-btn.active {
+  background: #fff;
+  box-shadow: 0 3px 10px rgba(18, 52, 39, 0.1);
+}
+
 .auth-form {
   display: grid;
   gap: 0.7rem;
   margin: 1rem 0;
 }
 
+.password-strength {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+}
+
+.password-strength small {
+  color: #64756b;
+}
+
+.password-strength-bar {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e5ebe7;
+}
+
+.password-strength-bar span {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: inherit;
+  transition: width 180ms ease, background 180ms ease;
+}
+
+.password-strength.fraca {
+  color: #a33d32;
+}
+
+.password-strength.fraca .password-strength-bar span {
+  background: #d56a5d;
+}
+
+.password-strength.media {
+  color: #a56b14;
+}
+
+.password-strength.media .password-strength-bar span {
+  background: var(--sun);
+}
+
+.password-strength.forte {
+  color: var(--leaf);
+}
+
+.password-strength.forte .password-strength-bar span {
+  background: var(--leaf);
+}
+
 .auth-message {
   margin-top: 0.8rem;
+}
+
+.cost-history {
+  margin-top: 1.5rem;
+  border-top: 1px solid #e2ebe6;
+  padding-top: 1rem;
+}
+
+.cost-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.cost-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid #e2ebe6;
+  border-radius: 10px;
+  padding: 0.75rem;
+  background: #fbfdfb;
+}
+
+.cost-row p {
+  margin: 0.25rem 0 0;
+}
+
+.cost-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  white-space: nowrap;
 }
 
 .tab-btn {
@@ -319,6 +442,34 @@ textarea:focus {
 
 .machine-content {
   padding: 0.8rem;
+}
+
+.rental-history {
+  margin-top: 1.5rem;
+  border-top: 1px solid #e2ebe6;
+  padding-top: 1rem;
+}
+
+.rental-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  border: 1px solid #e2ebe6;
+  border-radius: 10px;
+  padding: 0.8rem;
+  background: #fbfdfb;
+}
+
+.rental-row p {
+  margin: 0.25rem 0 0;
+}
+
+.rental-total {
+  display: grid;
+  gap: 0.25rem;
+  text-align: right;
+  white-space: nowrap;
 }
 
 .status {
