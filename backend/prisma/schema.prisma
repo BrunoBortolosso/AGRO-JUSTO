@@ -40,14 +40,32 @@ model Usuario {
   senha        String
   tipoUsuario  TipoUsuario
   telefone     String?
+  regiao       String?
   dataCadastro DateTime    @default(now())
 
   produtos                 Produto[]
+  custos                   Custo[]
+  simulacoes               PrecoJusto[]
   equipamentos             Equipamento[]
+  sessions                 Session[]
   alugueis_como_locador    Aluguel[]     @relation("locador")
   alugueis_como_locatario  Aluguel[]     @relation("locatario")
 
   @@map("usuarios")
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  usuarioId String
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId])
+  @@index([expiresAt])
+  @@map("sessoes")
 }
 
 model Produto {
@@ -59,6 +77,8 @@ model Produto {
   tipoCultivo    String   // organico | convencional
   regiao         String?
   descricao      String?  @db.Text
+  preco          Decimal  @db.Decimal(10, 2)
+  imagem         String?
   dataCadastro   DateTime @default(now())
 
   usuario      Usuario      @relation(fields: [usuarioId], references: [id])
@@ -70,7 +90,8 @@ model Produto {
 
 model Custo {
   id               String    @id @default(uuid())
-  produtoId        String
+  produtoId        String?
+  usuarioId        String
   tipo             TipoCusto
   descricao        String
   valor            Decimal   @db.Decimal(10, 2)
@@ -80,23 +101,43 @@ model Custo {
   dataFim          DateTime?
   dataRegistro     DateTime  @default(now())
 
-  produto Produto @relation(fields: [produtoId], references: [id])
+  produto Produto? @relation(fields: [produtoId], references: [id])
+  usuario Usuario @relation(fields: [usuarioId], references: [id])
+
+  @@index([usuarioId])
+  @@index([produtoId])
 
   @@map("custos")
 }
 
 model PrecoJusto {
   id                  String   @id @default(uuid())
-  produtoId           String
-  custoTotal          Decimal  @db.Decimal(10, 2) // soma dos custos no momento do cálculo
-  margemLucro         Decimal  @db.Decimal(5, 2)  // percentual: ex: 20.00 = 20%
+  produtoId           String?
+  usuarioId           String
+  insumos             Decimal  @db.Decimal(10, 2)
+  maoDeObra           Decimal  @db.Decimal(10, 2)
+  transporteBase      Decimal  @db.Decimal(10, 2)
+  manutencao          Decimal  @db.Decimal(10, 2)
+  distanciaKm         Decimal  @db.Decimal(10, 3)
+  custoPorKm          Decimal  @db.Decimal(10, 2)
+  quantidade          Decimal  @db.Decimal(10, 3)
+  margem              Decimal  @db.Decimal(5, 2)
+  oferta              Decimal  @db.Decimal(5, 2)
+  demanda             Decimal  @db.Decimal(5, 2)
+  custoTotal          Decimal  @db.Decimal(10, 2)
+  custoUnitario       Decimal  @db.Decimal(10, 2)
   precoMinimo         Decimal  @db.Decimal(10, 2)
   precoIdeal          Decimal  @db.Decimal(10, 2)
+  margemLucro         Decimal  @db.Decimal(5, 2)
   quantidadeProduzida Decimal  @db.Decimal(10, 3)
   moeda               String   @default("BRL")
   dataCalculo         DateTime @default(now())
 
-  produto Produto @relation(fields: [produtoId], references: [id])
+  produto Produto? @relation(fields: [produtoId], references: [id])
+  usuario Usuario  @relation(fields: [usuarioId], references: [id])
+
+  @@index([usuarioId])
+  @@index([produtoId])
 
   @@map("precos_justos")
 }
@@ -107,8 +148,12 @@ model Equipamento {
   nome            String
   descricao       String?  @db.Text
   tipo            String
+  condicoes       String
+  dias            Decimal  @db.Decimal(10, 2)
+  imagem          String?
   valorDia        Decimal  @db.Decimal(10, 2)
   disponibilidade Boolean  @default(true)
+  excluidoEm      DateTime?
   dataCadastro    DateTime @default(now())
 
   usuario  Usuario   @relation(fields: [usuarioId], references: [id])
@@ -118,20 +163,27 @@ model Equipamento {
 }
 
 model Aluguel {
-  id            String        @id @default(uuid())
-  equipamentoId String
-  locadorId     String
-  locatarioId   String
-  dataInicio    DateTime
-  dataFim       DateTime
-  valorDiaria   Decimal       @db.Decimal(10, 2) // preço negociado nesse contrato
-  valorTotal    Decimal       @db.Decimal(10, 2)
-  status        StatusAluguel @default(ATIVO)
-  observacoes   String?       @db.Text
+  id          String        @id @default(uuid())
+  machineId   String        @map("equipamentoId")
+  usuarioId   String        @map("locadorId")
+  locatarioId String?       @map("locatarioId")
+  tenant      String
+  start       DateTime      @map("dataInicio")
+  end         DateTime      @map("dataFim")
+  dailyPrice  Decimal       @map("valorDiaria") @db.Decimal(10, 2)
+  total       Decimal       @map("valorTotal") @db.Decimal(10, 2)
+  notes       String?       @map("observacoes") @db.Text
+  status      StatusAluguel @default(ATIVO)
+  createdAt   DateTime      @default(now())
+  finalizadoEm DateTime?
 
-  equipamento Equipamento @relation(fields: [equipamentoId], references: [id])
-  locador     Usuario     @relation("locador",   fields: [locadorId],   references: [id])
-  locatario   Usuario     @relation("locatario", fields: [locatarioId], references: [id])
+  equipamento Equipamento @relation(fields: [machineId], references: [id])
+  locador     Usuario     @relation("locador", fields: [usuarioId], references: [id])
+  locatario   Usuario?    @relation("locatario", fields: [locatarioId], references: [id])
+
+  @@index([usuarioId])
+  @@index([machineId])
+  @@index([finalizadoEm])
 
   @@map("alugueis")
 }
