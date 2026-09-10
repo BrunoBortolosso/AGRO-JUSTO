@@ -1,131 +1,110 @@
 import express from "express";
+
 import { prisma } from "../db/prisma.js";
+import { auth } from "../middlewares/auth.js";
+import { validate } from "../middlewares/validate.js";
+import { badRequest, notFound } from "../utils/errors.js";
+import { CreateProductSchema, UpdateProductSchema } from "../validation/products.js";
 
 const router = express.Router();
+const productSelect = {
+  id: true,
+  nome: true,
+  quantidade: true,
+  unidadeMedida: true,
+  tipoCultivo: true,
+  regiao: true,
+  preco: true,
+  imagem: true,
+  dataCadastro: true
+};
 
 function parseIdParam(req) {
-  return String(req.params.id || "").trim();
-}
-
-function getUserId(req) {
-  return String(req.headers["x-user-id"] || process.env.DEFAULT_USER_ID || "").trim();
+  const id = String(req.params.id || "").trim();
+  if (!id) throw badRequest("Parâmetro 'id' inválido.");
+  return id;
 }
 
 function serializeProduct(product) {
   return {
     id: product.id,
     nome: product.nome,
-    quantidade: product.quantidade,
+    quantidade: Number(product.quantidade),
     unidade: product.unidadeMedida,
-    preco: null,
+    cultivo: product.tipoCultivo,
+    regiao: product.regiao,
+    preco: Number(product.preco),
+    imagem: product.imagem,
     createdAt: product.dataCadastro
   };
 }
 
-router.get("/", async (req, res) => {
-  const usuarioId = getUserId(req);
-  if (!usuarioId) return res.status(503).json({ error: "Configure DEFAULT_USER_ID para acessar produtos." });
+router.use(auth);
 
+router.get("/", async (req, res) => {
   const products = await prisma.produto.findMany({
-    where: { usuarioId },
+    where: { usuarioId: req.user.id },
     orderBy: { dataCadastro: "desc" },
-    select: {
-      id: true,
-      nome: true,
-      quantidade: true,
-      unidadeMedida: true,
-      dataCadastro: true
-    }
+    select: productSelect
   });
 
   res.json(products.map(serializeProduct));
 });
 
-router.post("/", async (req, res) => {
-  const usuarioId = getUserId(req);
-  if (!usuarioId) return res.status(503).json({ error: "Configure DEFAULT_USER_ID para cadastrar produtos." });
-  const nome = String(req.body?.nome || "").trim();
-  const quantidade = Number(req.body?.quantidade ?? 0);
-  const unidade = String(req.body?.unidade || "").trim();
-
-  if (!nome)
-    return res.status(400).json({ error: "Campo 'nome' é obrigatório." });
-  if (!unidade)
-    return res.status(400).json({ error: "Campo 'unidade' é obrigatório." });
-
+router.post("/", validate(CreateProductSchema), async (req, res) => {
+  const { nome, quantidade, unidade, cultivo, regiao, preco, imagem } = req.body;
   const product = await prisma.produto.create({
     data: {
-      usuarioId,
+      usuarioId: req.user.id,
       nome,
-      quantidade: Number.isFinite(quantidade)
-        ? Math.max(0, Math.trunc(quantidade))
-        : 0,
+      quantidade,
       unidadeMedida: unidade,
-      tipoCultivo: "convencional"
+      tipoCultivo: cultivo,
+      regiao,
+      preco,
+      imagem
     },
-    select: {
-      id: true,
-      nome: true,
-      quantidade: true,
-      unidadeMedida: true,
-      dataCadastro: true
-    }
+    select: productSelect
   });
 
   res.status(201).json(serializeProduct(product));
 });
 
-router.patch("/:id", async (req, res) => {
+router.patch("/:id", validate(UpdateProductSchema), async (req, res) => {
   const id = parseIdParam(req);
-  if (!id) return res.status(400).json({ error: "Parâmetro 'id' inválido." });
-  const usuarioId = getUserId(req);
-  if (!usuarioId) return res.status(503).json({ error: "Configure DEFAULT_USER_ID para editar produtos." });
-
   const data = {};
-  if (req.body?.nome !== undefined) data.nome = String(req.body.nome).trim();
-  if (req.body?.quantidade !== undefined) {
-    const quantidade = Number(req.body.quantidade);
-    data.quantidade = Number.isFinite(quantidade)
-      ? Math.max(0, Math.trunc(quantidade))
-      : 0;
-  }
-  if (req.body?.unidade !== undefined) data.unidadeMedida = String(req.body.unidade).trim();
+  const fields = ["nome", "quantidade", "unidade", "cultivo", "regiao", "preco", "imagem"];
 
-  try {
-    const product = await prisma.produto.updateMany({
-      where: { id, usuarioId },
-      data,
-    });
-    if (!product.count) return res.status(404).json({ error: "Produto não encontrado." });
-    const updated = await prisma.produto.findUnique({
-      where: { id },
-      select: { id: true, nome: true, quantidade: true, unidadeMedida: true, dataCadastro: true }
-    });
-    res.json(serializeProduct(updated));
-  } catch (e) {
-    if (e?.code === "P2025") {
-      return res.status(404).json({ error: "Produto não encontrado." });
-    }
-    throw e;
+  for (const field of fields) {
+    if (req.body[field] === undefined) continue;
+    const databaseField = {
+      unidade: "unidadeMedida",
+      cultivo: "tipoCultivo"
+    }[field] || field;
+    data[databaseField] = req.body[field];
   }
+
+  const updated = await prisma.produto.updateMany({
+    where: { id, usuarioId: req.user.id },
+    data
+  });
+  if (!updated.count) throw notFound("Produto não encontrado.");
+
+  const product = await prisma.produto.findUnique({
+    where: { id },
+    select: productSelect
+  });
+  res.json(serializeProduct(product));
 });
 
 router.delete("/:id", async (req, res) => {
   const id = parseIdParam(req);
-  if (!id) return res.status(400).json({ error: "Parâmetro 'id' inválido." });
-  const usuarioId = getUserId(req);
-  if (!usuarioId) return res.status(503).json({ error: "Configure DEFAULT_USER_ID para excluir produtos." });
+  const deleted = await prisma.produto.deleteMany({
+    where: { id, usuarioId: req.user.id }
+  });
+  if (!deleted.count) throw notFound("Produto não encontrado.");
 
-  try {
-    const product = await prisma.produto.deleteMany({ where: { id, usuarioId } });
-    if (!product.count) return res.status(404).json({ error: "Produto não encontrado." });
-    res.status(204).send();
-  } catch (e) {
-    if (e?.code === "P2025") {
-      return res.status(404).json({ error: "Produto não encontrado." });
-    }
-    throw e;
-  }
+  res.status(204).send();
 });
 
 export const productsRouter = router;

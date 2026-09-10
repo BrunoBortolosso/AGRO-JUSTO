@@ -1,0 +1,353 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-09-10T00:00:00.000Z",
+  "__export_source": "agrojusto.backend.documentation",
+  "resources": [
+    {
+      "_id": "wrk_agrojusto",
+      "parentId": null,
+      "modified": 0,
+      "created": 0,
+      "name": "AgroJusto API",
+      "description": "Colecao da API AgroJusto",
+      "scope": "collection",
+      "_type": "workspace"
+    },
+    {
+      "_id": "env_agrojusto",
+      "parentId": "wrk_agrojusto",
+      "modified": 0,
+      "created": 0,
+      "name": "Base Environment",
+      "data": {
+        "base_url": "http://localhost:3333",
+        "token": ""
+      },
+      "dataPropertyOrder": null,
+      "color": null,
+      "isPrivate": false,
+      "metaSortKey": 0,
+      "_type": "environment"
+    },
+    {
+      "_id": "jar_agrojusto",
+      "parentId": "wrk_agrojusto",
+      "name": "Jar",
+      "cookies": [],
+      "_type": "cookie_jar"
+    },
+    {
+      "_id": "grp_health",
+      "parentId": "wrk_agrojusto",
+      "name": "Health",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 1,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_health",
+      "parentId": "grp_health",
+      "name": "Healthcheck",
+      "method": "GET",
+      "url": "{{ _.base_url }}/health",
+      "headers": [],
+      "parameters": [],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "grp_auth",
+      "parentId": "wrk_agrojusto",
+      "name": "Auth",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 2,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_register",
+      "parentId": "grp_auth",
+      "name": "Register",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/register",
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "body": { "mimeType": "application/json", "text": "{\n  \"nome\": \"Maria Silva\",\n  \"email\": \"maria@example.com\",\n  \"senha\": \"senha-segura-123\",\n  \"regiao\": \"Sul\"\n}" },
+      "_type": "request"
+    },
+    {
+      "_id": "req_login",
+      "parentId": "grp_auth",
+      "name": "Login",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/login",
+      "headers": [{ "name": "Content-Type", "value": "application/json" }],
+      "body": { "mimeType": "application/json", "text": "{\n  \"email\": \"maria@example.com\",\n  \"senha\": \"senha-segura-123\"\n}" },
+      "_type": "request"
+    },
+    {
+      "_id": "req_logout",
+      "parentId": "grp_auth",
+      "name": "Logout",
+      "method": "POST",
+      "url": "{{ _.base_url }}/auth/logout",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "grp_profile",
+      "parentId": "wrk_agrojusto",
+      "name": "Perfil",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 3,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_me_get",
+      "parentId": "grp_profile",
+      "name": "Get profile",
+      "method": "GET",
+      "url": "{{ _.base_url }}/me",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_me_patch",
+      "parentId": "grp_profile",
+      "name": "Update profile",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/me",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }, { "name": "Content-Type", "value": "application/json" }],
+      "body": { "mimeType": "application/json", "text": "{\n  \"nome\": \"Maria Santos\",\n  \"regiao\": \"Sudeste\"\n}" },
+      "_type": "request"
+    },
+    {
+      "_id": "grp_products",
+      "parentId": "wrk_agrojusto",
+      "name": "Produtos",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 4,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_products_get",
+      "parentId": "grp_products",
+      "name": "List products",
+      "method": "GET",
+      "url": "{{ _.base_url }}/products",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_products_post",
+      "parentId": "grp_products",
+      "name": "Create product",
+      "method": "POST",
+      "url": "{{ _.base_url }}/products",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }, { "name": "Content-Type", "value": "application/json" }],
+      "body": { "mimeType": "application/json", "text": "{\n  \"nome\": \"Milho\",\n  \"quantidade\": 12.5,\n  \"unidade\": \"saca\",\n  \"cultivo\": \"organico\",\n  \"regiao\": \"Sul\",\n  \"preco\": 75.5\n}" },
+      "_type": "request"
+    },
+    {
+      "_id": "req_products_patch",
+      "parentId": "grp_products",
+      "name": "Update product",
+      "method": "PATCH",
+      "url": "{{ _.base_url }}/products/{{ product_id }}",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }, { "name": "Content-Type", "value": "application/json" }],
+      "body": { "mimeType": "application/json", "text": "{\n  \"preco\": 80\n}" },
+      "_type": "request"
+    },
+    {
+      "_id": "req_products_delete",
+      "parentId": "grp_products",
+      "name": "Delete product",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/products/{{ product_id }}",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "grp_costs",
+      "parentId": "wrk_agrojusto",
+      "name": "Custos",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 5,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_costs_get",
+      "parentId": "grp_costs",
+      "name": "List costs",
+      "method": "GET",
+      "url": "{{ _.base_url }}/costs",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_costs_post",
+      "parentId": "grp_costs",
+      "name": "Create cost",
+      "method": "POST",
+      "url": "{{ _.base_url }}/costs",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }, { "name": "Content-Type", "value": "application/json" }],
+      "body": { "mimeType": "application/json", "text": "{\n  \"categoria\": \"INSUMO\",\n  \"descricao\": \"Adubo\",\n  \"valor\": 800,\n  \"data\": \"2026-09-10\"\n}" },
+      "_type": "request"
+    },
+    {
+      "_id": "req_costs_summary",
+      "parentId": "grp_costs",
+      "name": "Costs summary",
+      "method": "GET",
+      "url": "{{ _.base_url }}/costs/summary",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_costs_delete",
+      "parentId": "grp_costs",
+      "name": "Delete cost",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/costs/{{ cost_id }}",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "grp_pricing",
+      "parentId": "wrk_agrojusto",
+      "name": "Precificacao",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 6,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_pricing_post",
+      "parentId": "grp_pricing",
+      "name": "Create simulation",
+      "method": "POST",
+      "url": "{{ _.base_url }}/pricing/simulations",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }, { "name": "Content-Type", "value": "application/json" }],
+      "body": { "mimeType": "application/json", "text": "{\n  \"insumos\": 100,\n  \"maoDeObra\": 50,\n  \"transporteBase\": 20,\n  \"manutencao\": 10,\n  \"distanciaKm\": 10,\n  \"custoPorKm\": 2,\n  \"quantidade\": 10,\n  \"margem\": 10,\n  \"oferta\": 1,\n  \"demanda\": 1.2\n}" },
+      "_type": "request"
+    },
+    {
+      "_id": "req_pricing_get",
+      "parentId": "grp_pricing",
+      "name": "List simulations",
+      "method": "GET",
+      "url": "{{ _.base_url }}/pricing/simulations?page=1&limit=20",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "grp_machines",
+      "parentId": "wrk_agrojusto",
+      "name": "Maquinas",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 7,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_machines_get",
+      "parentId": "grp_machines",
+      "name": "List machines",
+      "method": "GET",
+      "url": "{{ _.base_url }}/machines",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_machines_post",
+      "parentId": "grp_machines",
+      "name": "Create machine",
+      "method": "POST",
+      "url": "{{ _.base_url }}/machines",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }, { "name": "Content-Type", "value": "application/json" }],
+      "body": { "mimeType": "application/json", "text": "{\n  \"nome\": \"Trator\",\n  \"preco\": 250,\n  \"tipo\": \"agricola\",\n  \"condicoes\": \"Boa\",\n  \"dias\": 7\n}" },
+      "_type": "request"
+    },
+    {
+      "_id": "req_machines_delete",
+      "parentId": "grp_machines",
+      "name": "Delete machine",
+      "method": "DELETE",
+      "url": "{{ _.base_url }}/machines/{{ machine_id }}",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "grp_rentals",
+      "parentId": "wrk_agrojusto",
+      "name": "Alugueis",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 8,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_rentals_get",
+      "parentId": "grp_rentals",
+      "name": "List rentals",
+      "method": "GET",
+      "url": "{{ _.base_url }}/rentals",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "req_rentals_post",
+      "parentId": "grp_rentals",
+      "name": "Create rental",
+      "method": "POST",
+      "url": "{{ _.base_url }}/rentals",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }, { "name": "Content-Type", "value": "application/json" }],
+      "body": { "mimeType": "application/json", "text": "{\n  \"machineId\": \"{{ machine_id }}\",\n  \"tenant\": \"Joao da Silva\",\n  \"start\": \"2026-09-10\",\n  \"end\": \"2026-09-10\",\n  \"notes\": \"Pagamento na entrega\"\n}" },
+      "_type": "request"
+    },
+    {
+      "_id": "req_rentals_finish",
+      "parentId": "grp_rentals",
+      "name": "Finish rental",
+      "method": "POST",
+      "url": "{{ _.base_url }}/rentals/{{ rental_id }}/finish",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {},
+      "_type": "request"
+    },
+    {
+      "_id": "grp_dashboard",
+      "parentId": "wrk_agrojusto",
+      "name": "Dashboard",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": 9,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_dashboard",
+      "parentId": "grp_dashboard",
+      "name": "Get dashboard",
+      "method": "GET",
+      "url": "{{ _.base_url }}/dashboard",
+      "headers": [{ "name": "Authorization", "value": "Bearer {{ _.token }}" }],
+      "body": {},
+      "_type": "request"
+    }
+  ]
+}

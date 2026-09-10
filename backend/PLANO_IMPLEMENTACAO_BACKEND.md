@@ -51,6 +51,26 @@ Campos históricos de cálculo que não possam ser reconstruídos ficam nulos, s
 
 Inspecionar o histórico aplicado antes de migrar. Se o banco tiver sido criado por `db push`, estabelecer uma baseline compatível antes das novas migrações, conforme [documentação do Prisma](https://www.prisma.io/docs/orm/prisma-migrate/workflows/baselining). Não resetar o banco nem modificar migrações já aplicadas.
 
+### Estratégia de expansão e preservação de dados
+
+As alterações que adicionam campos obrigatórios devem ser executadas em duas fases, para que registros existentes continuem válidos durante toda a migração.
+
+**Produto (`preco`):**
+
+1. Primeira migração: adicionar `preco` como `Decimal?`, sem exigir valor para os registros antigos.
+2. Backfill: preencher `preco` dos produtos existentes usando a referência estática de saca de 60 kg do protótipo quando aplicável. Registros sem referência confiável permanecem identificados para revisão, sem inventar valores.
+3. Validação: confirmar que todos os registros que serão mantidos no contrato obrigatório possuem valor válido e compatível com os limites do banco.
+4. Segunda migração: somente após o backfill e a validação, alterar `preco` para `Decimal` obrigatório.
+
+**Equipamento (`condicoes` e `dias`):**
+
+1. Primeira migração: adicionar `condicoes` como `String?` e `dias` como `Decimal?`, permitindo que os equipamentos existentes continuem válidos.
+2. Backfill: preencher os valores a partir de dados históricos confiáveis. Quando não houver informação suficiente, manter o campo nulo e registrar os casos para revisão, sem criar valores fictícios.
+3. Validação: confirmar que os registros que serão usados pelo novo contrato possuem `condicoes` e `dias` preenchidos e válidos.
+4. Migração futura: somente depois do backfill e da validação, tornar `condicoes` e `dias` obrigatórios (`String` e `Decimal`).
+
+Durante as duas fases, as migrações devem ser aplicadas em ordem, revisadas em uma cópia do banco e acompanhadas de verificação de contagens e valores antes e depois. Nenhuma etapa deve apagar registros existentes.
+
 ## 3. Contratos e regras das funcionalidades
 
 Manter nomes de rotas em inglês, como `/products`, e campos próximos dos usados pelo protótipo. Documentar os contratos em OpenAPI, incluindo exemplos, respostas e autenticação.
