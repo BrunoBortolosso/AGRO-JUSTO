@@ -1,4 +1,5 @@
-import { createContext, useContext, useMemo, useReducer, useEffect } from 'react';
+import { createContext, useContext, useMemo, useReducer, useEffect, createElement } from 'react';
+import placeholderImage from './assets/images/agro-placeholder.svg';
 
 export const AgroContext = createContext(null);
 
@@ -28,14 +29,14 @@ export const demoUser = {
 };
 
 export const defaultProducts = [
-  { id: 'p1', nome: 'Milho', quantidade: 48, unidade: 'saca_60kg', cultivo: 'convencional', regiao: 'Zona rural - Campinas', preco: 71 },
-  { id: 'p2', nome: 'Soja', quantidade: 55, unidade: 'saca_60kg', cultivo: 'convencional', regiao: 'Zona rural - Ribeirao Preto', preco: 132 },
-  { id: 'p3', nome: 'Feijao Carioca', quantidade: 22, unidade: 'saca_60kg', cultivo: 'convencional', regiao: 'Zona rural - Goiania', preco: 245 }
+  { id: 'p1', nome: 'Milho', quantidade: 48, unidade: 'saca_60kg', cultivo: 'convencional', regiao: 'Zona rural - Campinas', preco: 71, categoria: 'Grãos', organico: false, imagem: '' },
+  { id: 'p2', nome: 'Soja', quantidade: 55, unidade: 'saca_60kg', cultivo: 'convencional', regiao: 'Zona rural - Ribeirao Preto', preco: 132, categoria: 'Grãos', organico: false, imagem: '' },
+  { id: 'p3', nome: 'Feijao Carioca', quantidade: 22, unidade: 'saca_60kg', cultivo: 'convencional', regiao: 'Zona rural - Goiania', preco: 245, categoria: 'Leguminosas', organico: false, imagem: '' }
 ];
 
 export const defaultMachines = [
-  { id: 'm1', nome: 'Trator 4x4', tipo: 'trator', status: 'disponivel', imagem: '', diaria: 160, locacao: '2 dias', codigo: 'TR-001', descricao: 'Trator leve para preparo de solo' },
-  { id: 'm2', nome: 'Plantadeira', tipo: 'plantadeira', status: 'alugada', imagem: '', diaria: 180, locacao: '1 dia', codigo: 'PL-002', descricao: 'Plantadeira para cultura de milho' }
+  { id: 'm1', nome: 'Trator 4x4', tipo: 'trator', status: 'disponivel', imagem: '', diaria: 160, locacao: '2 dias', codigo: 'TR-001', descricao: 'Trator leve para preparo de solo', localizacao: 'Campinas', proprietario: 'Produtor AgroJusto' },
+  { id: 'm2', nome: 'Plantadeira', tipo: 'plantadeira', status: 'alugada', imagem: '', diaria: 180, locacao: '1 dia', codigo: 'PL-002', descricao: 'Plantadeira para cultura de milho', localizacao: 'Ribeirao Preto', proprietario: 'Produtor AgroJusto' }
 ];
 
 export const defaultCosts = [
@@ -115,7 +116,7 @@ export function AgroProvider({ children }) {
 
   const value = useMemo(() => ({ state, dispatch }), [state]);
 
-  return <AgroContext.Provider value={value}>{children}</AgroContext.Provider>;
+  return createElement(AgroContext.Provider, { value }, children);
 }
 
 export function useAgro() {

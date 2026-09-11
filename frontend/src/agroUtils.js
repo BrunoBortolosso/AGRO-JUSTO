@@ -24,7 +24,11 @@ export function aggregateCosts(costs = []) {
 }
 
 export function getReferenceUnit(unit) {
-  return unit === 'saca_60kg' ? 'saca_60kg' : 'kg';
+  const normalized = String(unit || '').toLowerCase().trim();
+  if (normalized === 'saca_60kg' || normalized === 'saca' || normalized === 'sacas') {
+    return 'saca_60kg';
+  }
+  return 'kg';
 }
 
 export function evaluatePasswordStrength(password = '') {

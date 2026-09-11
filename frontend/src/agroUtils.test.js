@@ -43,6 +43,7 @@ describe('agroUtils', () => {
 
   it('preserva a referência de saca de 60 kg quando a unidade for sacas', () => {
     expect(getReferenceUnit('saca_60kg')).toBe('saca_60kg');
+    expect(getReferenceUnit('saca')).toBe('saca_60kg');
     expect(getReferenceUnit('kg')).toBe('kg');
   });
 
