@@ -81,8 +81,27 @@ export function reducer(state, action) {
   switch (action.type) {
     case 'setAuthMode': return { ...state, authMode: action.mode };
     case 'setAuthMessage': return { ...state, authMessage: action.message };
-    case 'register': return { ...state, users: [...state.users, action.user], auth: action.user, authMode: 'login', authMessage: '' };
-    case 'login': return { ...state, auth: action.user, authMode: 'login', authMessage: '' };
+    case 'register': {
+      const profile = action.user?.profile || state.profile || defaultProfile;
+      return {
+        ...state,
+        users: [...state.users, action.user],
+        auth: { ...action.user, profile },
+        profile,
+        authMode: 'login',
+        authMessage: ''
+      };
+    }
+    case 'login': {
+      const profile = action.user?.profile || state.profile || defaultProfile;
+      return {
+        ...state,
+        auth: { ...action.user, profile },
+        profile,
+        authMode: 'login',
+        authMessage: ''
+      };
+    }
     case 'logout': return { ...state, auth: null, authMessage: '' };
     case 'setTab': return { ...state, activeTab: action.tab };
     case 'setProducts': return { ...state, products: action.products };
@@ -90,7 +109,14 @@ export function reducer(state, action) {
     case 'setCosts': return { ...state, costs: action.costs };
     case 'setRentals': return { ...state, rentals: action.rentals };
     case 'setPricing': return { ...state, pricing: action.pricing };
-    case 'setProfile': return { ...state, profile: action.profile };
+    case 'setProfile': {
+      const profile = action.profile || state.profile || defaultProfile;
+      return {
+        ...state,
+        profile,
+        auth: state.auth ? { ...state.auth, profile } : state.auth
+      };
+    }
     default: return state;
   }
 }

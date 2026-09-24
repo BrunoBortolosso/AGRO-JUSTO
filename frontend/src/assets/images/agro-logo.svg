@@ -1,0 +1,46 @@
+<svg width="800" height="800" viewBox="0 0 800 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="120" y1="80" x2="680" y2="700" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F5FBF1"/>
+      <stop offset="1" stop-color="#EAF6EA"/>
+    </linearGradient>
+    <linearGradient id="leaf" x1="210" y1="170" x2="520" y2="530" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3E9B67"/>
+      <stop offset="1" stop-color="#1E4E3B"/>
+    </linearGradient>
+    <linearGradient id="sun" x1="390" y1="150" x2="470" y2="220" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F9D86D"/>
+      <stop offset="1" stop-color="#E7A835"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="40" y="40" width="720" height="720" rx="32" fill="url(#bg)"/>
+  <circle cx="610" cy="160" r="58" fill="#F6D468" opacity="0.22"/>
+
+  <g>
+    <path d="M220 496C286 430 330 351 368 249C429 292 475 365 503 437C458 494 395 525 324 526C288 526 252 517 220 496Z" fill="url(#leaf)"/>
+    <path d="M310 234C287 301 281 368 289 438C236 415 189 377 155 332C182 273 242 242 310 234Z" fill="#53A56F"/>
+    <path d="M392 170C350 228 318 293 296 364C231 342 177 302 122 259C188 205 274 172 392 170Z" fill="#2C6F4B" opacity="0.9"/>
+    <path d="M188 364C249 330 299 315 354 308" stroke="#EAF8EE" stroke-width="14" stroke-linecap="round"/>
+    <path d="M146 397C206 389 259 390 336 401" stroke="#EAF8EE" stroke-width="12" stroke-linecap="round" opacity="0.9"/>
+    <circle cx="390" cy="184" r="40" fill="url(#sun)"/>
+    <path d="M390 118V82" stroke="#E2A62C" stroke-width="10" stroke-linecap="round"/>
+    <path d="M390 286V250" stroke="#E2A62C" stroke-width="10" stroke-linecap="round"/>
+    <path d="M327 184H291" stroke="#E2A62C" stroke-width="10" stroke-linecap="round"/>
+    <path d="M489 184H525" stroke="#E2A62C" stroke-width="10" stroke-linecap="round"/>
+    <path d="M350 142L328 120" stroke="#E2A62C" stroke-width="8" stroke-linecap="round"/>
+    <path d="M430 226L452 248" stroke="#E2A62C" stroke-width="8" stroke-linecap="round"/>
+    <path d="M350 226L328 248" stroke="#E2A62C" stroke-width="8" stroke-linecap="round"/>
+    <path d="M430 142L452 120" stroke="#E2A62C" stroke-width="8" stroke-linecap="round"/>
+  </g>
+
+  <g>
+    <text x="400" y="560" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="82" font-weight="700" fill="#184D3B" letter-spacing="-2">AgroJusto</text>
+    <text x="400" y="610" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="600" fill="#5E7468">preço justo para quem produz</text>
+    <rect x="260" y="640" width="280" height="14" rx="7" fill="#DBE9D9"/>
+    <rect x="260" y="640" width="190" height="14" rx="7" fill="#2E7D4F"/>
+    <circle cx="315" cy="685" r="12" fill="#F2B441"/>
+    <circle cx="355" cy="685" r="12" fill="#2E7D4F"/>
+    <circle cx="395" cy="685" r="12" fill="#184D3B"/>
+  </g>
+</svg>

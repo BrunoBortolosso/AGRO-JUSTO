@@ -3,6 +3,10 @@ import { useAgro, storageKeys } from '../agroCore.js';
 export default function Header() {
   const { state, dispatch } = useAgro();
 
+  function openProfileTab() {
+    dispatch({ type: 'setTab', tab: 'perfil' });
+  }
+
   function logout() {
     dispatch({ type: 'logout' });
     localStorage.removeItem(storageKeys.auth);
@@ -19,7 +23,7 @@ export default function Header() {
       </div>
       <div className="top-actions">
         <span className="user-chip">{state.profile?.nome || 'Visitante'}</span>
-        <button className="btn ghost" type="button">Editar perfil</button>
+        <button className="btn ghost" type="button" onClick={openProfileTab}>Editar perfil</button>
         <button className="btn ghost" type="button" onClick={logout}>Sair</button>
       </div>
     </header>

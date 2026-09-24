@@ -7,6 +7,7 @@ import PricingPage from './components/PricingPage.jsx';
 import ProductsPage from './components/ProductsPage.jsx';
 import MachinesPage from './components/MachinesPage.jsx';
 import DashboardPage from './components/DashboardPage.jsx';
+import ProfilePage from './components/ProfilePage.jsx';
 
 function AgroApp() {
   const { state } = useAgro();
@@ -16,7 +17,8 @@ function AgroApp() {
     precificacao: <PricingPage />,
     produtos: <ProductsPage />,
     maquinas: <MachinesPage />,
-    painel: <DashboardPage />
+    painel: <DashboardPage />,
+    perfil: <ProfilePage />
   };
 
   return (

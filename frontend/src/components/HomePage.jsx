@@ -1,4 +1,5 @@
 import { useAgro } from '../agroCore.js';
+import agroLogo from '../assets/images/agro-logo.svg';
 
 export default function HomePage() {
   const { dispatch } = useAgro();
@@ -14,7 +15,7 @@ export default function HomePage() {
             <button className="btn secondary" data-go="maquinas" type="button" onClick={() => dispatch({ type: 'setTab', tab: 'maquinas' })}>Ver maquinas</button>
           </div>
         </div>
-        <img src="https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=900&q=80" alt="Produtor no campo" />
+        <img src={agroLogo} alt="Logo AgroJusto" className="hero-logo" />
       </article>
       <article className="grid-3">
         <div className="card mini"><h3>1. Precificacao inteligente</h3><p>Evite prejuizo com base real de custo e ajuste de mercado local simulado.</p></div>

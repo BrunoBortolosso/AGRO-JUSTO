@@ -7,7 +7,8 @@ export default function Tabs() {
     { key: 'precificacao', label: 'Preco Justo' },
     { key: 'produtos', label: 'Produtos' },
     { key: 'maquinas', label: 'Maquinas' },
-    { key: 'painel', label: 'Painel' }
+    { key: 'painel', label: 'Painel' },
+    { key: 'perfil', label: 'Perfil' }
   ];
 
   return (
