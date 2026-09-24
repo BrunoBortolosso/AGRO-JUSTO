@@ -20,16 +20,12 @@ export default function MachinesPage() {
     tipo: 'trator',
     diaria: 100,
     imagem: '',
-    descricao: 'Maquina cadastrada',
+    descricao: 'Máquina cadastrada',
     localizacao: 'Engenheiro Coelho',
     proprietario: 'Produtor AgroJusto'
   });
   const [editingMachineId, setEditingMachineId] = useState(null);
   const [message, setMessage] = useState('');
-  const [machineQuery, setMachineQuery] = useState('');
-  const [machineFilter, setMachineFilter] = useState('todas');
-  const [actionMachine, setActionMachine] = useState(null);
-  const [rentalForm, setRentalForm] = useState({ inicio: '', fim: '' });
 
   function resetMachineForm() {
     setMachineForm({
@@ -37,7 +33,7 @@ export default function MachinesPage() {
       tipo: 'trator',
       diaria: 100,
       imagem: '',
-      descricao: 'Maquina cadastrada',
+      descricao: 'Máquina cadastrada',
       localizacao: 'Engenheiro Coelho',
       proprietario: 'Produtor AgroJusto'
     });
@@ -84,6 +80,7 @@ export default function MachinesPage() {
   function addMachine(event) {
     event.preventDefault();
     if (!machineForm.nome.trim()) return;
+
     const normalizedTipo = String(machineForm.tipo || 'trator').toLowerCase();
     const image = machineForm.imagem || machineImages[normalizedTipo] || placeholderImage;
     const machine = {
@@ -93,13 +90,12 @@ export default function MachinesPage() {
       status: 'disponivel',
       imagem: image,
       diaria: Number(machineForm.diaria) || 0,
-      locacao: '1 dia',
-      codigo: `MA-${Math.round(Math.random() * 999)}`,
-      descricao: machineForm.descricao || 'Maquina cadastrada',
+      descricao: machineForm.descricao || 'Máquina cadastrada',
       localizacao: machineForm.localizacao || 'Engenheiro Coelho',
       proprietario: machineForm.proprietario || 'Produtor AgroJusto'
     };
-    dispatch({ type: 'setMachines', machines: [...state.machines, machine] });
+
+    dispatch({ type: 'setMachines', machines: [...(state.machines || []), machine] });
     resetMachineForm();
   }
 
@@ -110,7 +106,7 @@ export default function MachinesPage() {
       tipo: machine.tipo,
       diaria: Number(machine.diaria) || 0,
       imagem: machine.imagem || '',
-      descricao: machine.descricao || 'Maquina cadastrada',
+      descricao: machine.descricao || 'Máquina cadastrada',
       localizacao: machine.localizacao || 'Engenheiro Coelho',
       proprietario: machine.proprietario || 'Produtor AgroJusto'
     });
@@ -120,6 +116,7 @@ export default function MachinesPage() {
   function saveEdit(event) {
     event.preventDefault();
     if (!editingMachineId) return;
+
     const normalizedTipo = String(machineForm.tipo || 'trator').toLowerCase();
     const updated = (state.machines || []).map((machine) => machine.id === editingMachineId ? {
       ...machine,
@@ -127,16 +124,17 @@ export default function MachinesPage() {
       tipo: machineForm.tipo,
       diaria: Number(machineForm.diaria) || 0,
       imagem: machineForm.imagem || machineImages[normalizedTipo] || placeholderImage,
-      descricao: machineForm.descricao || 'Maquina cadastrada',
+      descricao: machineForm.descricao || 'Máquina cadastrada',
       localizacao: machineForm.localizacao || 'Engenheiro Coelho',
       proprietario: machineForm.proprietario || 'Produtor AgroJusto'
     } : machine);
+
     dispatch({ type: 'setMachines', machines: updated });
     resetMachineForm();
   }
 
   function deleteMachine(id) {
-    dispatch({ type: 'setMachines', machines: state.machines.filter((m) => m.id !== id) });
+    dispatch({ type: 'setMachines', machines: (state.machines || []).filter((machine) => machine.id !== id) });
   }
 
   function removeMachineImage() {
@@ -144,46 +142,13 @@ export default function MachinesPage() {
     setMessage('Imagem removida com sucesso!');
   }
 
-  function openRental(machine) {
-    setActionMachine(machine);
-    setRentalForm({ inicio: '', fim: '' });
-  }
-
-  function closeRental() {
-    setActionMachine(null);
-  }
-
-  function finishRental(machineId) {
-    const machine = state.machines.find((m) => m.id === machineId);
-    if (!machine) return;
-    dispatch({ type: 'setMachines', machines: state.machines.map((m) => m.id === machineId ? { ...m, status: 'alugada' } : m) });
-    const rentalEntry = { id: crypto.randomUUID(), machineId, maquina: machine.nome, inicio: rentalForm.inicio || new Date().toISOString().slice(0, 10), fim: rentalForm.fim || new Date().toISOString().slice(0, 10), status: 'encerrado' };
-    dispatch({ type: 'setRentals', rentals: [rentalEntry, ...(state.rentals || [])] });
-    closeRental();
-  }
-
-  const filteredMachines = (state.machines || []).filter((machine) => {
-    const matchesText = (machine.nome || '').toLowerCase().includes(machineQuery.toLowerCase()) || (machine.tipo || '').toLowerCase().includes(machineQuery.toLowerCase()) || (machine.localizacao || '').toLowerCase().includes(machineQuery.toLowerCase());
-    const matchesFilter = machineFilter === 'todas' || machine.tipo === machineFilter;
-    return matchesText && matchesFilter;
-  });
-
   return (
-    <section className="tab-panel active machines-page">
-      <article className="card machines-catalog-card">
-        <div className="section-heading"><div><span className="auth-kicker">Maquinas</span><h2>Catalogo e aluguel</h2></div></div>
-        <p className="section-subtitle">Encontre máquinas agrícolas para sua produção</p>
-        <div className="machine-toolbar">
-          <input className="machine-search" type="search" placeholder="Buscar máquina" value={machineQuery} onChange={(e) => setMachineQuery(e.target.value)} />
-          <select className="machine-filter" value={machineFilter} onChange={(e) => setMachineFilter(e.target.value)}>
-            <option value="todas">Todos os tipos</option>
-            <option value="trator">Trator</option>
-            <option value="plantadeira">Plantadeira</option>
-            <option value="grade">Grade</option>
-            <option value="colheitadeira">Colheitadeira</option>
-          </select>
+    <section className="tab-panel active">
+      <article className="card product-layout-card">
+        <div className="section-heading">
+          <div><span className="auth-kicker">Máquinas</span><h2>Cadastro de máquinas</h2></div>
         </div>
-        <div className="two-col">
+        <div className="two-col product-split">
           <MachineForm
             machineForm={machineForm}
             setMachineForm={setMachineForm}
@@ -195,19 +160,27 @@ export default function MachinesPage() {
             removeMachineImage={removeMachineImage}
             message={message}
           />
-          <div className="machines-grid">{filteredMachines.map((machine) => <MachineCard key={machine.id} machine={machine} onEdit={() => startEdit(machine)} onRental={() => openRental(machine)} onDelete={() => deleteMachine(machine.id)} />)}</div>
+          <div className="product-list">
+            {(state.machines || []).map((machine) => (
+              <MachineCard
+                key={machine.id}
+                machine={machine}
+                onEdit={() => startEdit(machine)}
+                onDelete={() => deleteMachine(machine.id)}
+              />
+            ))}
+          </div>
         </div>
-        <RentalHistory rentals={state.rentals || []} />
       </article>
-      {actionMachine && <dialog open className="rental-dialog"><div className="dialog-card"><h3>Aluguel de {actionMachine.nome}</h3><label>Inicio<input type="date" value={rentalForm.inicio} onChange={(e) => setRentalForm({ ...rentalForm, inicio: e.target.value })} /></label><label>Fim<input type="date" value={rentalForm.fim} onChange={(e) => setRentalForm({ ...rentalForm, fim: e.target.value })} /></label><div className="dialog-actions"><button className="btn" type="button" onClick={() => finishRental(actionMachine.id)}>Salvar aluguel</button><button className="btn secondary" type="button" onClick={closeRental}>Cancelar</button></div></div></dialog>}
     </section>
   );
 }
 
 function MachineForm({ machineForm, setMachineForm, editingMachineId, addMachine, saveEdit, resetMachineForm, handleMachineImageChange, removeMachineImage, message }) {
   const imagePreview = machineForm.imagem || placeholderImage;
+
   return (
-    <form className="machine-form" onSubmit={editingMachineId ? saveEdit : addMachine}>
+    <form className="product-form" onSubmit={editingMachineId ? saveEdit : addMachine}>
       <div className="upload-card">
         <div className="upload-preview">
           <img src={imagePreview} alt="Foto da máquina" className="upload-thumb" />
@@ -226,57 +199,83 @@ function MachineForm({ machineForm, setMachineForm, editingMachineId, addMachine
           </div>
         </div>
       </div>
+
       {message && <div className="status-message">{message}</div>}
-      <label>Nome<input type="text" value={machineForm.nome} onChange={(e) => setMachineForm({ ...machineForm, nome: e.target.value })} required /></label>
-      <label>Tipo<select value={machineForm.tipo} onChange={(e) => setMachineForm({ ...machineForm, tipo: e.target.value })}><option value="trator">Trator</option><option value="plantadeira">Plantadeira</option><option value="grade">Grade</option><option value="colheitadeira">Colheitadeira</option></select></label>
-      <label>Diária<input type="number" value={machineForm.diaria} onChange={(e) => setMachineForm({ ...machineForm, diaria: Number(e.target.value) })} /></label>
-      <label>Localização<input type="text" value={machineForm.localizacao} onChange={(e) => setMachineForm({ ...machineForm, localizacao: e.target.value })} /></label>
-      <label>Proprietário<input type="text" value={machineForm.proprietario} onChange={(e) => setMachineForm({ ...machineForm, proprietario: e.target.value })} /></label>
-      <label>Descrição<textarea value={machineForm.descricao} onChange={(e) => setMachineForm({ ...machineForm, descricao: e.target.value })} /></label>
+
+      <label>
+        Nome
+        <input type="text" value={machineForm.nome} onChange={(e) => setMachineForm({ ...machineForm, nome: e.target.value })} required />
+      </label>
+
+      <label>
+        Tipo
+        <select value={machineForm.tipo} onChange={(e) => setMachineForm({ ...machineForm, tipo: e.target.value })}>
+          <option value="trator">Trator</option>
+          <option value="plantadeira">Plantadeira</option>
+          <option value="grade">Grade</option>
+          <option value="colheitadeira">Colheitadeira</option>
+        </select>
+      </label>
+
+      <label>
+        Diária
+        <input type="number" value={machineForm.diaria} min="0" step="0.01" onChange={(e) => setMachineForm({ ...machineForm, diaria: Number(e.target.value) })} />
+      </label>
+
+      <label>
+        Localização
+        <input type="text" value={machineForm.localizacao} onChange={(e) => setMachineForm({ ...machineForm, localizacao: e.target.value })} />
+      </label>
+
+      <label>
+        Proprietário
+        <input type="text" value={machineForm.proprietario} onChange={(e) => setMachineForm({ ...machineForm, proprietario: e.target.value })} />
+      </label>
+
+      <label>
+        Descrição
+        <textarea value={machineForm.descricao} onChange={(e) => setMachineForm({ ...machineForm, descricao: e.target.value })} />
+      </label>
+
       <div className="form-actions">
-        <button className="btn" type="submit">{editingMachineId ? 'Salvar alterações' : 'Adicionar maquina'}</button>
+        <button className="btn" type="submit">{editingMachineId ? 'Salvar alterações' : 'Adicionar máquina'}</button>
         {editingMachineId && <button className="btn secondary" type="button" onClick={resetMachineForm}>Cancelar</button>}
       </div>
     </form>
   );
 }
 
-function MachineCard({ machine, onEdit, onRental, onDelete }) {
+function MachineCard({ machine, onEdit, onDelete }) {
   const image = machine.imagem || machineImages[String(machine.tipo || 'trator').toLowerCase()] || placeholderImage;
   const status = machine.status === 'alugada' ? 'Indisponível' : 'Disponível';
+
   return (
-    <article className="machine-card">
-      <div className="machine-card-image">
+    <article className="product-card">
+      <div className="product-card-image">
         <img src={image} alt={machine.nome || machine.tipo} />
       </div>
-      <div className="machine-card-content">
-        <div className="machine-card-head">
-          <span className="machine-icon">🚜</span>
+      <div className="product-card-content">
+        <div className="product-card-head">
+          <span className="product-icon">🚜</span>
           <div>
             <h3>{machine.nome || 'Máquina agrícola'}</h3>
-            <span className="machine-type">Tipo: {machine.tipo}</span>
+            <span className="product-category">{machine.tipo || 'Máquina'}</span>
           </div>
         </div>
-        <div className="machine-card-meta">
+
+        <div className="product-card-meta">
           <div><span>📍 Localização</span><strong>{machine.localizacao || 'Engenheiro Coelho'}</strong></div>
           <div><span>💰 Diária</span><strong>R$ {Number(machine.diaria || 0).toFixed(2)}</strong></div>
           <div><span>👤 Proprietário</span><strong>{machine.proprietario || 'Produtor AgroJusto'}</strong></div>
           <div><span>🟢 Disponibilidade</span><strong>{status}</strong></div>
         </div>
-        <div className="machine-card-description">
-          <span>{machine.descricao || 'Máquina cadastrada'}</span>
-        </div>
-        <div className="machine-card-actions">
-          <button className="btn small" type="button">Ver máquina</button>
+
+        <div className="product-card-actions">
+          <button className="btn small" type="button">Ver detalhes</button>
           <button className="btn secondary small" type="button" onClick={onEdit}>Editar</button>
-          <button className="btn small" type="button" onClick={onRental}>Alugar</button>
           <button className="btn danger small" type="button" onClick={onDelete}>Excluir</button>
         </div>
       </div>
     </article>
   );
-}
-
-function RentalHistory({ rentals }) {
-  return <div className="rental-history"><h3>Historico de alugueis</h3>{(rentals || []).length === 0 ? <span className="muted">Nenhum aluguel registrado</span> : rentals.map((r) => <div className="history-row" key={r.id}><span>{r.maquina}</span><strong>{r.inicio} → {r.fim}</strong></div>)}</div>;
 }
