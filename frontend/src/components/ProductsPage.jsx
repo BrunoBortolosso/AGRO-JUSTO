@@ -3,17 +3,23 @@ import { useAgro } from '../agroCore.js';
 import placeholderImage from '../assets/images/agro-placeholder.svg';
 
 const productImages = {
-  tomate: 'https://images.unsplash.com/photo-1592841200221-7e0367d0c3ab?auto=format&fit=crop&w=900&q=80',
-  alface: 'https://images.unsplash.com/photo-1622206151226-18ca2c9ab4a4?auto=format&fit=crop&w=900&q=80',
-  milho: 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=900&q=80',
-  cafe: 'https://images.unsplash.com/photo-1442512595331-e89e73853f31?auto=format&fit=crop&w=900&q=80',
-  feijao: 'https://images.unsplash.com/photo-1501004318741-b39ece5ba562?auto=format&fit=crop&w=900&q=80',
-  batata: 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?auto=format&fit=crop&w=900&q=80',
-  cenoura: 'https://images.unsplash.com/photo-1447175008436-054170c2e979?auto=format&fit=crop&w=900&q=80',
-  morango: 'https://images.unsplash.com/photo-1605056545114-504b4d138f07?auto=format&fit=crop&w=900&q=80',
-  banana: 'https://images.unsplash.com/photo-1603833665858-e61d17a86224?auto=format&fit=crop&w=900&q=80',
-  laranja: 'https://images.unsplash.com/photo-1601004890684-d8cbf643f5f2?auto=format&fit=crop&w=900&q=80'
+  tomate: placeholderImage,
+  alface: placeholderImage,
+  milho: placeholderImage,
+  cafe: placeholderImage,
+  feijao: placeholderImage,
+  batata: placeholderImage,
+  cenoura: placeholderImage,
+  morango: placeholderImage,
+  banana: placeholderImage,
+  laranja: placeholderImage
 };
+
+function resolveProductImage(name, fallbackImage = '') {
+  const normalizedName = String(name || '').trim().toLowerCase();
+  if (fallbackImage) return fallbackImage;
+  return productImages[normalizedName] || placeholderImage;
+}
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 const allowedProductImageTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
@@ -74,6 +80,9 @@ export default function ProductsPage() {
   async function handleProductImageChange(event) {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    event.target.value = '';
+
     try {
       const dataUrl = await readFileAsDataUrl(file);
       setProductForm((current) => ({ ...current, imagem: dataUrl }));
@@ -97,7 +106,7 @@ export default function ProductsPage() {
       regiao: productForm.regiao || 'Regiao nao informada',
       preco: Number(productForm.preco || 0),
       organico: Boolean(productForm.organico),
-      imagem: productForm.imagem || productImages[naturalKey] || placeholderImage
+      imagem: productForm.imagem || resolveProductImage(naturalKey)
     };
     dispatch({ type: 'setProducts', products: [...state.products, product] });
     resetProductForm();
@@ -213,7 +222,7 @@ function ProductForm({ productForm, setProductForm, editingProductId, addProduct
 }
 
 function ProductCard({ product, onEdit, onDelete }) {
-  const image = product.imagem || productImages[String(product.nome || '').trim().toLowerCase()] || placeholderImage;
+  const image = product.imagem || resolveProductImage(product.nome);
   const orgânico = Boolean(product.organico ?? (product.cultivo === 'organico' || product.cultivo === 'orgânico'));
   const category = product.categoria || (product.cultivo || 'Produto');
   const unit = product.unidade || 'kg';

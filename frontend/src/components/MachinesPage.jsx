@@ -69,6 +69,9 @@ export default function MachinesPage() {
   async function handleMachineImageChange(event) {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    event.target.value = '';
+
     try {
       const dataUrl = await readFileAsDataUrl(file);
       setMachineForm((current) => ({ ...current, imagem: dataUrl }));

@@ -29,9 +29,9 @@ export const demoUser = {
 };
 
 export const defaultProducts = [
-  { id: 'p1', nome: 'Milho', quantidade: 48, unidade: 'saca_60kg', cultivo: 'convencional', regiao: 'Zona rural - Campinas', preco: 71, categoria: 'Grãos', organico: false, imagem: '' },
-  { id: 'p2', nome: 'Soja', quantidade: 55, unidade: 'saca_60kg', cultivo: 'convencional', regiao: 'Zona rural - Ribeirao Preto', preco: 132, categoria: 'Grãos', organico: false, imagem: '' },
-  { id: 'p3', nome: 'Feijao Carioca', quantidade: 22, unidade: 'saca_60kg', cultivo: 'convencional', regiao: 'Zona rural - Goiania', preco: 245, categoria: 'Leguminosas', organico: false, imagem: '' }
+  { id: 'p1', nome: 'Milho', quantidade: 48, unidade: 'saca_60kg', cultivo: 'convencional', regiao: 'Zona rural - Campinas', preco: 71, categoria: 'Grãos', organico: false, imagem: placeholderImage },
+  { id: 'p2', nome: 'Soja', quantidade: 55, unidade: 'saca_60kg', cultivo: 'convencional', regiao: 'Zona rural - Ribeirao Preto', preco: 132, categoria: 'Grãos', organico: false, imagem: placeholderImage },
+  { id: 'p3', nome: 'Feijao Carioca', quantidade: 22, unidade: 'saca_60kg', cultivo: 'convencional', regiao: 'Zona rural - Goiania', preco: 245, categoria: 'Leguminosas', organico: false, imagem: placeholderImage }
 ];
 
 export const defaultMachines = [
