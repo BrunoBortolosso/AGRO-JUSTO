@@ -1,4 +1,5 @@
 import { createContext, useContext, useMemo, useReducer, useEffect, createElement } from 'react';
+import { apiClient } from './apiClient.js';
 import placeholderImage from './assets/images/agro-placeholder.svg';
 
 export const AgroContext = createContext(null);
@@ -11,7 +12,8 @@ export const storageKeys = {
   machines: 'agrojusto.machines',
   rentals: 'agrojusto.rentals',
   costs: 'agrojusto.costs',
-  pricing: 'agrojusto.pricingHistory'
+  pricing: 'agrojusto.pricingHistory',
+  integrationVersion: 'agrojusto.integrationVersion'
 };
 
 export const defaultProfile = {
@@ -19,13 +21,6 @@ export const defaultProfile = {
   regiao: 'Regiao nao informada',
   bio: 'Atualize seu perfil para personalizar o painel.',
   foto: 'https://images.unsplash.com/photo-1592878849122-5f7735d83654?auto=format&fit=crop&w=240&q=80'
-};
-
-export const demoUser = {
-  nome: 'Produtor AgroJusto',
-  email: 'produtor@agrojusto.com',
-  senha: '123456',
-  profile: defaultProfile
 };
 
 export const defaultProducts = [
@@ -63,10 +58,12 @@ export function writeJSON(key, value) {
 
 export function initialState() {
   return {
-    auth: readJSON(storageKeys.auth, null),
-    users: readJSON(storageKeys.users, [demoUser]),
+    auth: null,
+    token: '',
+    authStatus: 'checking',
+    users: [],
     profile: readJSON(storageKeys.profile, defaultProfile),
-    products: readJSON(storageKeys.products, defaultProducts),
+    products: [],
     machines: readJSON(storageKeys.machines, defaultMachines),
     rentals: readJSON(storageKeys.rentals, []),
     costs: readJSON(storageKeys.costs, defaultCosts),
@@ -79,36 +76,40 @@ export function initialState() {
 
 export function reducer(state, action) {
   switch (action.type) {
-    case 'setAuthMode': return { ...state, authMode: action.mode };
-    case 'setAuthMessage': return { ...state, authMessage: action.message };
-    case 'register': {
+    case 'setAuthMode':
+      return { ...state, authMode: action.mode };
+    case 'setAuthMessage':
+      return { ...state, authMessage: action.message };
+    case 'setSession': {
       const profile = action.user?.profile || state.profile || defaultProfile;
       return {
         ...state,
-        users: [...state.users, action.user],
-        auth: { ...action.user, profile },
+        auth: action.user || null,
+        token: action.token || state.token || '',
+        authStatus: 'authenticated',
         profile,
         authMode: 'login',
         authMessage: ''
       };
     }
-    case 'login': {
-      const profile = action.user?.profile || state.profile || defaultProfile;
-      return {
-        ...state,
-        auth: { ...action.user, profile },
-        profile,
-        authMode: 'login',
-        authMessage: ''
-      };
-    }
-    case 'logout': return { ...state, auth: null, authMessage: '' };
-    case 'setTab': return { ...state, activeTab: action.tab };
-    case 'setProducts': return { ...state, products: action.products };
-    case 'setMachines': return { ...state, machines: action.machines };
-    case 'setCosts': return { ...state, costs: action.costs };
-    case 'setRentals': return { ...state, rentals: action.rentals };
-    case 'setPricing': return { ...state, pricing: action.pricing };
+    case 'clearSession':
+      return { ...state, auth: null, token: '', authStatus: 'anonymous', authMessage: '' };
+    case 'setAuthStatus':
+      return { ...state, authStatus: action.status };
+    case 'logout':
+      return { ...state, auth: null, token: '', authStatus: 'anonymous', authMessage: '' };
+    case 'setTab':
+      return { ...state, activeTab: action.tab };
+    case 'setProducts':
+      return { ...state, products: action.products };
+    case 'setMachines':
+      return { ...state, machines: action.machines };
+    case 'setCosts':
+      return { ...state, costs: action.costs };
+    case 'setRentals':
+      return { ...state, rentals: action.rentals };
+    case 'setPricing':
+      return { ...state, pricing: action.pricing };
     case 'setProfile': {
       const profile = action.profile || state.profile || defaultProfile;
       return {
@@ -117,7 +118,8 @@ export function reducer(state, action) {
         auth: state.auth ? { ...state.auth, profile } : state.auth
       };
     }
-    default: return state;
+    default:
+      return state;
   }
 }
 
@@ -125,20 +127,43 @@ export function AgroProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, undefined, initialState);
 
   useEffect(() => {
-    writeJSON(storageKeys.users, state.users);
     writeJSON(storageKeys.profile, state.profile);
-    writeJSON(storageKeys.products, state.products);
     writeJSON(storageKeys.machines, state.machines);
     writeJSON(storageKeys.rentals, state.rentals);
     writeJSON(storageKeys.costs, state.costs);
     writeJSON(storageKeys.pricing, state.pricing);
-
-    if (state.auth) {
-      writeJSON(storageKeys.auth, state.auth);
-    } else {
-      localStorage.removeItem(storageKeys.auth);
-    }
+    localStorage.setItem(storageKeys.integrationVersion, '1');
+    localStorage.removeItem(storageKeys.auth);
+    localStorage.removeItem(storageKeys.users);
+    localStorage.removeItem(storageKeys.products);
   }, [state]);
+
+  useEffect(() => {
+    let active = true;
+
+    async function restoreSession() {
+      const token = sessionStorage.getItem('agrojusto.token');
+      if (!token) {
+        if (active) dispatch({ type: 'setAuthStatus', status: 'anonymous' });
+        return;
+      }
+
+      try {
+        const response = await apiClient.get('/me');
+        if (!active) return;
+        dispatch({ type: 'setSession', user: response.user, token });
+      } catch {
+        if (!active) return;
+        sessionStorage.removeItem('agrojusto.token');
+        dispatch({ type: 'clearSession' });
+      }
+    }
+
+    restoreSession();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const value = useMemo(() => ({ state, dispatch }), [state]);
 
@@ -146,5 +171,28 @@ export function AgroProvider({ children }) {
 }
 
 export function useAgro() {
-  return useContext(AgroContext);
+  const context = useContext(AgroContext);
+
+  if (!context) {
+    return {
+      state: {
+        auth: null,
+        token: '',
+        authStatus: 'anonymous',
+        users: [],
+        profile: defaultProfile,
+        products: [],
+        machines: defaultMachines,
+        rentals: [],
+        costs: defaultCosts,
+        pricing: defaultPricing,
+        activeTab: 'inicio',
+        authMode: 'login',
+        authMessage: ''
+      },
+      dispatch: () => {}
+    };
+  }
+
+  return context;
 }

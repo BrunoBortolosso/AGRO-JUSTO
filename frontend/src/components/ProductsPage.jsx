@@ -1,25 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAgro } from '../agroCore.js';
+import { apiClient, normalizeApiError } from '../apiClient.js';
 import placeholderImage from '../assets/images/agro-placeholder.svg';
-
-const productImages = {
-  tomate: placeholderImage,
-  alface: placeholderImage,
-  milho: placeholderImage,
-  cafe: placeholderImage,
-  feijao: placeholderImage,
-  batata: placeholderImage,
-  cenoura: placeholderImage,
-  morango: placeholderImage,
-  banana: placeholderImage,
-  laranja: placeholderImage
-};
-
-function resolveProductImage(name, fallbackImage = '') {
-  const normalizedName = String(name || '').trim().toLowerCase();
-  if (fallbackImage) return fallbackImage;
-  return productImages[normalizedName] || placeholderImage;
-}
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 const allowedProductImageTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
@@ -31,14 +13,48 @@ export default function ProductsPage() {
     quantidade: 1,
     unidade: 'saca_60kg',
     imagem: '',
-    categoria: 'Produto',
     regiao: 'Regiao nao informada',
     cultivo: 'convencional',
-    preco: 0,
-    organico: false
+    preco: 0
   });
   const [editingProductId, setEditingProductId] = useState(null);
   const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
+
+  useEffect(() => {
+    if (state.authStatus !== 'authenticated') {
+      dispatch({ type: 'setProducts', products: [] });
+      return;
+    }
+
+    let active = true;
+
+    async function loadProducts() {
+      setLoading(true);
+      setMessage('');
+
+      try {
+        const products = await apiClient.get('/products');
+        if (active) {
+          dispatch({ type: 'setProducts', products: Array.isArray(products) ? products : [] });
+        }
+      } catch (error) {
+        if (active) {
+          const normalized = normalizeApiError(error, 'Não foi possível carregar os produtos.');
+          setMessage(normalized.message);
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+
+    loadProducts();
+    return () => {
+      active = false;
+    };
+  }, [dispatch, state.authStatus, state.auth?.id]);
 
   function resetProductForm() {
     setProductForm({
@@ -46,11 +62,9 @@ export default function ProductsPage() {
       quantidade: 1,
       unidade: 'saca_60kg',
       imagem: '',
-      categoria: 'Produto',
       regiao: 'Regiao nao informada',
       cultivo: 'convencional',
-      preco: 0,
-      organico: false
+      preco: 0
     });
     setEditingProductId(null);
     setMessage('');
@@ -70,6 +84,7 @@ export default function ProductsPage() {
         reject(new Error('Imagem muito grande. Escolha uma imagem de até 5 MB.'));
         return;
       }
+
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result);
       reader.onerror = () => reject(new Error('Não foi possível carregar a imagem.'));
@@ -87,29 +102,47 @@ export default function ProductsPage() {
       const dataUrl = await readFileAsDataUrl(file);
       setProductForm((current) => ({ ...current, imagem: dataUrl }));
       setMessage('Imagem adicionada com sucesso!');
-    } catch (err) {
-      setMessage(err.message || 'Formato de imagem não permitido.');
+    } catch (error) {
+      setMessage(error.message || 'Formato de imagem não permitido.');
     }
   }
 
   async function addProduct(event) {
     event.preventDefault();
-    if (!productForm.nome.trim()) return;
-    const naturalKey = String(productForm.nome).trim().toLowerCase();
-    const product = {
-      id: crypto.randomUUID(),
-      nome: productForm.nome,
-      quantidade: Number(productForm.quantidade) || 1,
-      unidade: productForm.unidade,
-      categoria: productForm.categoria || 'Produto',
-      cultivo: productForm.cultivo || 'convencional',
-      regiao: productForm.regiao || 'Regiao nao informada',
-      preco: Number(productForm.preco || 0),
-      organico: Boolean(productForm.organico),
-      imagem: productForm.imagem || resolveProductImage(naturalKey)
-    };
-    dispatch({ type: 'setProducts', products: [...state.products, product] });
-    resetProductForm();
+
+    if (!productForm.nome.trim()) {
+      setMessage('Informe o nome do produto.');
+      return;
+    }
+
+    if (Number(productForm.quantidade) <= 0 || Number(productForm.preco) <= 0) {
+      setMessage('Quantidade e preço devem ser maiores que zero.');
+      return;
+    }
+
+    setSaving(true);
+    setMessage('');
+
+    try {
+      const payload = {
+        nome: productForm.nome,
+        quantidade: Number(productForm.quantidade),
+        unidade: productForm.unidade,
+        cultivo: productForm.cultivo || 'convencional',
+        regiao: productForm.regiao || 'Regiao nao informada',
+        preco: Number(productForm.preco),
+        ...(productForm.imagem ? { imagem: productForm.imagem } : {})
+      };
+
+      const created = await apiClient.post('/products', payload);
+      dispatch({ type: 'setProducts', products: [created, ...(state.products || [])] });
+      resetProductForm();
+    } catch (error) {
+      const normalized = normalizeApiError(error, 'Não foi possível criar o produto.');
+      setMessage(normalized.message);
+    } finally {
+      setSaving(false);
+    }
   }
 
   function startEdit(product) {
@@ -119,36 +152,71 @@ export default function ProductsPage() {
       quantidade: product.quantidade || 1,
       unidade: product.unidade || 'saca_60kg',
       imagem: product.imagem || '',
-      categoria: product.categoria || 'Produto',
       regiao: product.regiao || 'Regiao nao informada',
       cultivo: product.cultivo || 'convencional',
-      preco: product.preco || 0,
-      organico: Boolean(product.organico)
+      preco: Number(product.preco || 0)
     });
     setMessage('');
   }
 
-  function saveEdit(event) {
+  async function saveEdit(event) {
     event.preventDefault();
     if (!editingProductId) return;
-    const updated = (state.products || []).map((product) => product.id === editingProductId ? {
-      ...product,
-      nome: productForm.nome,
-      quantidade: Number(productForm.quantidade) || 1,
-      unidade: productForm.unidade,
-      categoria: productForm.categoria || 'Produto',
-      cultivo: productForm.cultivo || 'convencional',
-      regiao: productForm.regiao || 'Regiao nao informada',
-      preco: Number(productForm.preco || 0),
-      organico: Boolean(productForm.organico),
-      imagem: productForm.imagem || placeholderImage
-    } : product);
-    dispatch({ type: 'setProducts', products: updated });
-    resetProductForm();
+
+    if (Number(productForm.quantidade) <= 0 || Number(productForm.preco) <= 0) {
+      setMessage('Quantidade e preço devem ser maiores que zero.');
+      return;
+    }
+
+    setSaving(true);
+    setMessage('');
+
+    try {
+      const payload = {
+        nome: productForm.nome,
+        quantidade: Number(productForm.quantidade),
+        unidade: productForm.unidade,
+        cultivo: productForm.cultivo || 'convencional',
+        regiao: productForm.regiao || 'Regiao nao informada',
+        preco: Number(productForm.preco),
+        ...(productForm.imagem ? { imagem: productForm.imagem } : {})
+      };
+
+      const updated = await apiClient.patch(`/products/${editingProductId}`, payload);
+      dispatch({
+        type: 'setProducts',
+        products: (state.products || []).map((product) => product.id === editingProductId ? updated : product)
+      });
+      resetProductForm();
+    } catch (error) {
+      const normalized = normalizeApiError(error, 'Não foi possível salvar o produto.');
+      setMessage(normalized.message);
+    } finally {
+      setSaving(false);
+    }
   }
 
-  function deleteProduct(id) {
-    dispatch({ type: 'setProducts', products: state.products.filter((p) => p.id !== id) });
+  async function deleteProduct(id) {
+    if (!window.confirm('Deseja excluir este produto?')) return;
+
+    setDeletingId(id);
+    setMessage('');
+
+    try {
+      await apiClient.del(`/products/${id}`);
+      dispatch({
+        type: 'setProducts',
+        products: (state.products || []).filter((product) => product.id !== id)
+      });
+      if (editingProductId === id) {
+        resetProductForm();
+      }
+    } catch (error) {
+      const normalized = normalizeApiError(error, 'Não foi possível excluir o produto.');
+      setMessage(normalized.message);
+    } finally {
+      setDeletingId(null);
+    }
   }
 
   function removeProductImage() {
@@ -173,9 +241,20 @@ export default function ProductsPage() {
             handleProductImageChange={handleProductImageChange}
             removeProductImage={removeProductImage}
             message={message}
+            saving={saving}
           />
           <div className="product-list">
-            {(state.products || []).map((product) => <ProductCard key={product.id} product={product} onEdit={() => startEdit(product)} onDelete={() => deleteProduct(product.id)} />)}
+            {loading && <p className="badge">Carregando produtos...</p>}
+            {!loading && (state.products || []).length === 0 && <p className="badge">Nenhum produto cadastrado.</p>}
+            {(state.products || []).map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onEdit={() => startEdit(product)}
+                onDelete={() => deleteProduct(product.id)}
+                deleting={deletingId === product.id}
+              />
+            ))}
           </div>
         </div>
       </article>
@@ -183,8 +262,9 @@ export default function ProductsPage() {
   );
 }
 
-function ProductForm({ productForm, setProductForm, editingProductId, addProduct, saveEdit, resetProductForm, handleProductImageChange, removeProductImage, message }) {
+function ProductForm({ productForm, setProductForm, editingProductId, addProduct, saveEdit, resetProductForm, handleProductImageChange, removeProductImage, message, saving }) {
   const imagePreview = productForm.imagem || placeholderImage;
+
   return (
     <form className="product-form" onSubmit={editingProductId ? saveEdit : addProduct}>
       <div className="upload-card">
@@ -209,23 +289,19 @@ function ProductForm({ productForm, setProductForm, editingProductId, addProduct
       <label>Nome<input type="text" value={productForm.nome} onChange={(e) => setProductForm({ ...productForm, nome: e.target.value })} required /></label>
       <label>Quantidade<input type="number" value={productForm.quantidade} min="1" onChange={(e) => setProductForm({ ...productForm, quantidade: Number(e.target.value) })} /></label>
       <label>Unidade<select value={productForm.unidade} onChange={(e) => setProductForm({ ...productForm, unidade: e.target.value })}><option value="saca_60kg">Saca 60kg</option><option value="kg">Kg</option></select></label>
-      <label>Categoria<input type="text" value={productForm.categoria} onChange={(e) => setProductForm({ ...productForm, categoria: e.target.value })} /></label>
       <label>Região<input type="text" value={productForm.regiao} onChange={(e) => setProductForm({ ...productForm, regiao: e.target.value })} /></label>
+      <label>Cultivo<select value={productForm.cultivo} onChange={(e) => setProductForm({ ...productForm, cultivo: e.target.value })}><option value="convencional">Convencional</option><option value="organico">Orgânico</option></select></label>
       <label>Preço<input type="number" value={productForm.preco} min="0" step="0.01" onChange={(e) => setProductForm({ ...productForm, preco: Number(e.target.value) })} /></label>
-      <label><span className="inline-check"><input type="checkbox" checked={productForm.organico} onChange={(e) => setProductForm({ ...productForm, organico: e.target.checked })} /> Orgânico</span></label>
       <div className="form-actions">
-        <button className="btn" type="submit">{editingProductId ? 'Salvar alterações' : 'Adicionar produto'}</button>
+        <button className="btn" type="submit" disabled={saving}>{saving ? 'Salvando...' : (editingProductId ? 'Salvar alterações' : 'Adicionar produto')}</button>
         {editingProductId && <button className="btn secondary" type="button" onClick={resetProductForm}>Cancelar</button>}
       </div>
     </form>
   );
 }
 
-function ProductCard({ product, onEdit, onDelete }) {
-  const image = product.imagem || resolveProductImage(product.nome);
-  const orgânico = Boolean(product.organico ?? (product.cultivo === 'organico' || product.cultivo === 'orgânico'));
-  const category = product.categoria || (product.cultivo || 'Produto');
-  const unit = product.unidade || 'kg';
+function ProductCard({ product, onEdit, onDelete, deleting }) {
+  const image = product.imagem || placeholderImage;
   return (
     <article className="product-card">
       <div className="product-card-image">
@@ -236,19 +312,18 @@ function ProductCard({ product, onEdit, onDelete }) {
           <span className="product-icon">🌱</span>
           <div>
             <h3>{product.nome}</h3>
-            <span className="product-category">{category}</span>
+            <span className="product-category">{product.cultivo || 'Produto'}</span>
           </div>
         </div>
         <div className="product-card-meta">
-          <div><span>📦 Quantidade</span><strong>{product.quantidade || 1} {unit}</strong></div>
+          <div><span>📦 Quantidade</span><strong>{product.quantidade || 1} {product.unidade || 'kg'}</strong></div>
           <div><span>📍 Região</span><strong>{product.regiao || 'Região não informada'}</strong></div>
-          <div><span>🌿 Orgânico</span><strong>{orgânico ? 'Sim' : 'Não'}</strong></div>
+          <div><span>🌿 Cultivo</span><strong>{product.cultivo || 'Convencional'}</strong></div>
           <div><span>💰 Preço</span><strong>R$ {Number(product.preco || 0).toFixed(2)}</strong></div>
         </div>
         <div className="product-card-actions">
-          <button className="btn small" type="button">Ver detalhes</button>
           <button className="btn secondary small" type="button" onClick={onEdit}>Editar</button>
-          <button className="btn danger small" type="button" onClick={onDelete}>Excluir</button>
+          <button className="btn danger small" type="button" onClick={onDelete} disabled={deleting}>{deleting ? 'Excluindo...' : 'Excluir'}</button>
         </div>
       </div>
     </article>

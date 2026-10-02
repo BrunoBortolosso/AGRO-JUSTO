@@ -21,6 +21,24 @@ function AgroApp() {
     perfil: <ProfilePage />
   };
 
+  if (state.authStatus === 'checking') {
+    return (
+      <div className="page-background">
+        <div className="main-container">
+          <div className="auth-shell">
+            <article className="auth-card card">
+              <div className="auth-heading">
+                <span className="auth-kicker">Acesso do produtor</span>
+                <h2>Validando sessão...</h2>
+                <p className="muted">Conectando com o AgroJusto.</p>
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="page-background">
       <div className="main-container">

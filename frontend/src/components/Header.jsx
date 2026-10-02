@@ -1,4 +1,5 @@
-import { useAgro, storageKeys } from '../agroCore.js';
+import { useAgro } from '../agroCore.js';
+import { apiClient, normalizeApiError, TOKEN_STORAGE_KEY } from '../apiClient.js';
 
 export default function Header() {
   const { state, dispatch } = useAgro();
@@ -7,9 +8,16 @@ export default function Header() {
     dispatch({ type: 'setTab', tab: 'perfil' });
   }
 
-  function logout() {
-    dispatch({ type: 'logout' });
-    localStorage.removeItem(storageKeys.auth);
+  async function logout() {
+    try {
+      await apiClient.post('/auth/logout');
+    } catch (error) {
+      const normalized = normalizeApiError(error, 'Não foi possível finalizar a sessão no servidor.');
+      console.warn(normalized.message);
+    } finally {
+      sessionStorage.removeItem(TOKEN_STORAGE_KEY);
+      dispatch({ type: 'clearSession' });
+    }
   }
 
   return (
@@ -22,7 +30,7 @@ export default function Header() {
         </div>
       </div>
       <div className="top-actions">
-        <span className="user-chip">{state.profile?.nome || 'Visitante'}</span>
+        <span className="user-chip">{state.auth?.nome || state.profile?.nome || 'Visitante'}</span>
         <button className="btn ghost" type="button" onClick={openProfileTab}>Editar perfil</button>
         <button className="btn ghost" type="button" onClick={logout}>Sair</button>
       </div>
