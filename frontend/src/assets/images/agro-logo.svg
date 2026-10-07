@@ -1,46 +1,93 @@
-<svg width="800" height="800" viewBox="0 0 800 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="1200" height="700" viewBox="0 0 1200 700" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="bg" x1="120" y1="80" x2="680" y2="700" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#F5FBF1"/>
-      <stop offset="1" stop-color="#EAF6EA"/>
+    <linearGradient id="fieldA" x1="190" y1="260" x2="760" y2="620" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5EA160"/>
+      <stop offset="1" stop-color="#1F5C3F"/>
     </linearGradient>
-    <linearGradient id="leaf" x1="210" y1="170" x2="520" y2="530" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#3E9B67"/>
-      <stop offset="1" stop-color="#1E4E3B"/>
+    <linearGradient id="fieldB" x1="120" y1="180" x2="780" y2="620" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6AAE63"/>
+      <stop offset="1" stop-color="#2C6D43"/>
     </linearGradient>
-    <linearGradient id="sun" x1="390" y1="150" x2="470" y2="220" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#F9D86D"/>
-      <stop offset="1" stop-color="#E7A835"/>
+    <linearGradient id="leafGrad" x1="250" y1="180" x2="520" y2="460" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7BC870"/>
+      <stop offset="1" stop-color="#1D5A3E"/>
+    </linearGradient>
+    <linearGradient id="sunGrad" x1="690" y1="120" x2="830" y2="220" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFD968"/>
+      <stop offset="1" stop-color="#F3B625"/>
     </linearGradient>
   </defs>
 
-  <rect x="40" y="40" width="720" height="720" rx="32" fill="url(#bg)"/>
-  <circle cx="610" cy="160" r="58" fill="#F6D468" opacity="0.22"/>
-
   <g>
-    <path d="M220 496C286 430 330 351 368 249C429 292 475 365 503 437C458 494 395 525 324 526C288 526 252 517 220 496Z" fill="url(#leaf)"/>
-    <path d="M310 234C287 301 281 368 289 438C236 415 189 377 155 332C182 273 242 242 310 234Z" fill="#53A56F"/>
-    <path d="M392 170C350 228 318 293 296 364C231 342 177 302 122 259C188 205 274 172 392 170Z" fill="#2C6F4B" opacity="0.9"/>
-    <path d="M188 364C249 330 299 315 354 308" stroke="#EAF8EE" stroke-width="14" stroke-linecap="round"/>
-    <path d="M146 397C206 389 259 390 336 401" stroke="#EAF8EE" stroke-width="12" stroke-linecap="round" opacity="0.9"/>
-    <circle cx="390" cy="184" r="40" fill="url(#sun)"/>
-    <path d="M390 118V82" stroke="#E2A62C" stroke-width="10" stroke-linecap="round"/>
-    <path d="M390 286V250" stroke="#E2A62C" stroke-width="10" stroke-linecap="round"/>
-    <path d="M327 184H291" stroke="#E2A62C" stroke-width="10" stroke-linecap="round"/>
-    <path d="M489 184H525" stroke="#E2A62C" stroke-width="10" stroke-linecap="round"/>
-    <path d="M350 142L328 120" stroke="#E2A62C" stroke-width="8" stroke-linecap="round"/>
-    <path d="M430 226L452 248" stroke="#E2A62C" stroke-width="8" stroke-linecap="round"/>
-    <path d="M350 226L328 248" stroke="#E2A62C" stroke-width="8" stroke-linecap="round"/>
-    <path d="M430 142L452 120" stroke="#E2A62C" stroke-width="8" stroke-linecap="round"/>
+    <path d="M186 431C242 430 312 372 368 289C428 331 493 404 519 467C475 526 420 563 343 567C280 570 228 524 186 431Z" fill="url(#leafGrad)"/>
+    <path d="M246 282C207 338 172 391 136 441C89 414 54 366 35 312C83 267 154 248 246 282Z" fill="#2A774B"/>
+    <path d="M392 270C356 319 330 370 293 421C248 401 206 369 169 332C220 263 296 228 392 270Z" fill="#5BAE6A"/>
+    <path d="M247 344C290 245 370 195 469 180C527 250 560 320 575 391C519 367 467 360 406 364C334 368 290 355 247 344Z" fill="#3F8C5A" opacity="0.9"/>
+
+    <path d="M167 438C260 406 323 390 407 388" stroke="#DBF7DF" stroke-width="12" stroke-linecap="round"/>
+    <path d="M148 473C241 470 312 468 406 482" stroke="#DBF7DF" stroke-width="10" stroke-linecap="round" opacity="0.9"/>
+
+    <path d="M232 451C261 487 283 513 313 541C274 559 231 573 183 578C169 544 177 503 232 451Z" fill="#224A39"/>
+    <path d="M298 517C338 477 381 446 447 425C478 462 491 495 485 540C442 564 394 574 328 567C308 551 300 536 298 517Z" fill="#1C4035"/>
+
+    <path d="M246 414C236 396 228 377 223 356C252 351 281 350 308 355C298 382 275 399 246 414Z" fill="#295A3F"/>
+    <path d="M321 412C338 390 355 368 376 345C404 365 420 389 432 416C389 428 354 424 321 412Z" fill="#214F39"/>
+
+    <path d="M310 315C338 297 364 279 392 258C417 285 436 314 450 347C412 354 376 357 338 351C324 342 316 330 310 315Z" fill="#2B6445"/>
+    <path d="M454 364C471 343 509 322 553 308C582 334 598 362 605 395C551 404 497 396 454 364Z" fill="#235B40"/>
+
+    <path d="M511 358C527 340 545 326 563 316C585 335 598 357 604 382C575 386 548 383 511 358Z" fill="#183E2D"/>
+    <path d="M342 385C363 410 393 431 434 451C397 470 358 484 305 490C279 459 283 420 342 385Z" fill="#153E30"/>
+
+    <path d="M535 192C566 192 591 205 610 231C629 257 638 286 638 319C609 323 584 323 549 313C530 275 522 237 535 192Z" fill="#285A3D"/>
+    <path d="M678 132C731 146 775 177 806 222C768 242 740 266 719 293C675 267 643 234 624 184C640 160 654 142 678 132Z" fill="#2E7B4B"/>
+    <path d="M589 138C608 171 613 201 606 232C563 229 531 214 509 183C526 166 548 148 589 138Z" fill="#184B36"/>
   </g>
 
   <g>
-    <text x="400" y="560" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="82" font-weight="700" fill="#184D3B" letter-spacing="-2">AgroJusto</text>
-    <text x="400" y="610" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="600" fill="#5E7468">preço justo para quem produz</text>
-    <rect x="260" y="640" width="280" height="14" rx="7" fill="#DBE9D9"/>
-    <rect x="260" y="640" width="190" height="14" rx="7" fill="#2E7D4F"/>
-    <circle cx="315" cy="685" r="12" fill="#F2B441"/>
-    <circle cx="355" cy="685" r="12" fill="#2E7D4F"/>
-    <circle cx="395" cy="685" r="12" fill="#184D3B"/>
+    <path d="M616 116C678 118 734 149 767 200C736 216 696 234 660 243C699 181 689 139 616 116Z" fill="#F7D861"/>
+    <circle cx="679" cy="177" r="47" fill="url(#sunGrad)"/>
+    <path d="M679 110V72" stroke="#E2A62C" stroke-width="9" stroke-linecap="round"/>
+    <path d="M679 244V282" stroke="#E2A62C" stroke-width="9" stroke-linecap="round"/>
+    <path d="M612 177H574" stroke="#E2A62C" stroke-width="9" stroke-linecap="round"/>
+    <path d="M784 177H822" stroke="#E2A62C" stroke-width="9" stroke-linecap="round"/>
+    <path d="M635 136L610 111" stroke="#E2A62C" stroke-width="8" stroke-linecap="round"/>
+    <path d="M725 220L748 243" stroke="#E2A62C" stroke-width="8" stroke-linecap="round"/>
+    <path d="M635 220L610 245" stroke="#E2A62C" stroke-width="8" stroke-linecap="round"/>
+    <path d="M725 136L748 111" stroke="#E2A62C" stroke-width="8" stroke-linecap="round"/>
+  </g>
+
+  <g>
+    <path d="M431 101C444 140 446 169 437 203C404 194 370 186 335 178C342 148 367 118 431 101Z" fill="#175740"/>
+    <path d="M348 208C359 176 381 146 422 124C445 163 452 203 442 242C411 242 382 231 348 208Z" fill="#0D4638"/>
+    <path d="M455 233C481 210 515 188 560 176C579 205 586 232 580 261C546 273 510 277 474 272C465 260 460 247 455 233Z" fill="#1A5842"/>
+    <path d="M402 251C412 355 494 415 568 449C612 421 651 380 678 328C648 298 625 278 596 260C563 277 525 285 491 279C466 274 437 267 402 251Z" fill="#1B573B"/>
+    <path d="M298 316C315 286 338 258 368 230C386 258 396 286 399 316C357 333 324 334 298 316Z" fill="#1E6E4A" opacity="0.8"/>
+  </g>
+
+  <g>
+    <path d="M316 423C344 403 370 392 398 390C415 405 429 424 440 450C394 470 353 480 300 480C287 467 284 444 316 423Z" fill="#1F4B39"/>
+    <path d="M402 444C444 424 492 418 541 423C545 451 542 480 527 512C469 518 420 509 379 484C384 469 390 457 402 444Z" fill="#184D3B"/>
+    <path d="M214 475C235 466 260 463 291 466C276 493 261 515 241 533C219 519 205 498 214 475Z" fill="#134D39"/>
+  </g>
+
+  <g>
+    <path d="M192 506C244 485 292 481 335 485C315 545 293 586 260 614C231 602 207 576 192 506Z" fill="#0A3A2B"/>
+    <path d="M331 500C367 494 405 499 449 514C431 560 414 598 388 634C356 628 328 606 316 566C311 535 317 517 331 500Z" fill="#0F4635"/>
+  </g>
+
+  <g>
+    <rect x="444" y="465" width="194" height="115" rx="16" fill="#F0F5EE"/>
+    <rect x="476" y="486" width="128" height="15" rx="7.5" fill="#DAE8D6"/>
+    <rect x="476" y="513" width="92" height="15" rx="7.5" fill="#D5E4D0"/>
+    <rect x="476" y="540" width="118" height="15" rx="7.5" fill="#D5E4D0"/>
+    <circle cx="614" cy="535" r="14" fill="#F1B534"/>
+    <path d="M603 535H621" stroke="#FFF9EC" stroke-width="4" stroke-linecap="round"/>
+  </g>
+
+  <g>
+    <text x="600" y="630" text-anchor="middle" font-size="118" font-weight="800" font-family="Segoe UI, Arial, sans-serif" fill="#154D3B" letter-spacing="-5">AGROJUSTO</text>
+    <line x1="420" y1="658" x2="780" y2="658" stroke="#E0B445" stroke-width="5" stroke-linecap="round"/>
+    <text x="600" y="690" text-anchor="middle" font-size="26" font-weight="700" font-family="Segoe UI, Arial, sans-serif" fill="#2D5F43" letter-spacing="2">A TECNOLOGIA QUE VALORIZA O AGRICULTOR</text>
   </g>
 </svg>

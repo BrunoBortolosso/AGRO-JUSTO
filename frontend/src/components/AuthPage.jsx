@@ -3,7 +3,7 @@ import { useAgro } from '../agroCore.js';
 import { apiClient, normalizeApiError, TOKEN_STORAGE_KEY } from '../apiClient.js';
 import { LoginForm } from './LoginForm.jsx';
 import { RegisterForm } from './RegisterForm.jsx';
-import agroLogo from '../assets/images/agro-logo.svg';
+import agroLogo from '../assets/LOGO.png';
 
 export default function AuthPage() {
   const { state, dispatch } = useAgro();

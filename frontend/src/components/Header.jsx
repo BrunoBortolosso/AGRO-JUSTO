@@ -1,5 +1,6 @@
 import { useAgro } from '../agroCore.js';
 import { apiClient, normalizeApiError, TOKEN_STORAGE_KEY } from '../apiClient.js';
+import agroLogo from '../assets/LOGO.png';
 
 export default function Header() {
   const { state, dispatch } = useAgro();
@@ -22,12 +23,8 @@ export default function Header() {
 
   return (
     <header className="topbar">
-      <div className="brand">
-        <i className="fa-solid fa-seedling"></i>
-        <div>
-          <h1>AgroJusto</h1>
-          <p>Preco justo para quem produz</p>
-        </div>
+      <div className="brand" aria-label="AgroJusto">
+        <img src={agroLogo} alt="Logo AgroJusto" className="brand-logo" />
       </div>
       <div className="top-actions">
         <span className="user-chip">{state.auth?.nome || state.profile?.nome || 'Visitante'}</span>

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   calculatePrice,
+  calculateFairPrice,
+  validateFairPriceForm,
   normalizeQuantity,
   addPriceHistory,
   aggregateCosts,
@@ -54,5 +56,54 @@ describe('agroUtils', () => {
 
   it('conta os dias de aluguel de forma inclusiva', () => {
     expect(calculateRentalDurationDays('2026-09-10', '2026-09-12')).toBe(3);
+  });
+
+  it('aplica a fórmula de custo total e lucro desejado no preço justo por saca', () => {
+    const result = calculateFairPrice({
+      semente: 2000,
+      veneno: 1200,
+      adubo: 1800,
+      irrigacao: 1000,
+      plantacaoAluguel: 600,
+      plantacaoCombustivel: 400,
+      plantacaoDiaria: 100,
+      plantacaoDias: 5,
+      colheitaAluguel: 700,
+      colheitaCombustivel: 600,
+      colheitaDiaria: 100,
+      colheitaDias: 3,
+      frete: 900,
+      quantidadeSacas: 100,
+      lucroDesejado: 20,
+    });
+
+    expect(result.prodTotal).toBe(10000);
+    expect(result.precoSaca).toBe(100);
+    expect(result.valorFinalSaca).toBe(120);
+    expect(result.rendimentoTotal).toBe(12000);
+  });
+
+  it('aceita plantação, irrigação e colheita opcionais, deixando apenas frete obrigatório', () => {
+    const validation = validateFairPriceForm({
+      semente: 1000,
+      veneno: 500,
+      adubo: 800,
+      irrigacao: '',
+      plantacaoAluguel: '',
+      plantacaoCombustivel: '',
+      plantacaoDiaria: '',
+      plantacaoDias: '',
+      colheitaAluguel: '',
+      colheitaCombustivel: '',
+      colheitaDiaria: '',
+      colheitaDias: '',
+      frete: 150,
+      quantidadeSacas: 20,
+      lucroDesejado: 25,
+    });
+
+    expect(validation.isValid).toBe(true);
+    expect(validation.values.frete).toBe(150);
+    expect(validation.values.irrigacao).toBe(0);
   });
 });

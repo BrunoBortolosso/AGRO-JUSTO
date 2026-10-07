@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAgro } from '../agroCore.js';
+import agroLogo from '../assets/LOGO.png';
 
 export default function ProfilePage() {
   const { state, dispatch } = useAgro();
@@ -30,6 +31,7 @@ export default function ProfilePage() {
             <span className="auth-kicker">Perfil</span>
             <h2>Editar perfil</h2>
           </div>
+          <img src={agroLogo} alt="AgroJusto" className="profile-logo" />
         </div>
 
         <form onSubmit={saveProfile} className="profile-form">

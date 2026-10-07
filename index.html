@@ -1,223 +1,87 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AgroJusto | Plataforma Rural Inteligente</title>
-  <meta name="description" content="AgroJusto - sistema inteligente de precificacao, aluguel de maquinas e painel do produtor.">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bree+Serif&family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWix+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkR4j8E2R5eS4kRTHvQW0l9V0P7Y5P9M9R0A==" crossorigin="anonymous" referrerpolicy="no-referrer">
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <div class="bg-layer" aria-hidden="true"></div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="refresh" content="0; url=http://localhost:5173/" />
+    <title>AgroJusto | Redirecionando...</title>
+    <meta
+      name="description"
+      content="AgroJusto - redirecionando para a versão atual da aplicação React."
+    />
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f4f8f1;
+        --card: #ffffff;
+        --green: #2b7a4b;
+        --green-dark: #1f5e3b;
+        --text: #1f2a1f;
+        --muted: #5d6f63;
+      }
 
-  <header class="topbar">
-    <div class="brand">
-      <i class="fa-solid fa-seedling"></i>
-      <div>
-        <h1>AgroJusto</h1>
-        <p>Preco justo para quem produz</p>
-      </div>
-    </div>
-    <div class="top-actions">
-      <span id="loggedUser" class="user-chip hidden">Visitante</span>
-      <button id="openProfileModal" class="btn ghost hidden" type="button">
-        <i class="fa-solid fa-user"></i>
-        Editar perfil
-      </button> 
-      <button id="btnLogout" class="btn ghost hidden" type="button">
-        <i class="fa-solid fa-right-from-bracket"></i>
-        Sair
-      </button>
-    </div>
-  </header>
+      * {
+        box-sizing: border-box;
+      }
 
-  <section id="authGate" class="auth-gate">
-    <article class="auth-card card">
-      <div class="auth-heading">
-        <span class="auth-kicker">Acesso do produtor</span>
-        <h2 id="authTitle">Entrar no AgroJusto</h2>
-        <p id="authSubtitle" class="muted">Acesse sua conta para cuidar da sua producao.</p>
-      </div>
-      <div class="auth-switch" role="tablist" aria-label="Modo de acesso">
-        <button id="loginMode" class="auth-switch-btn active" type="button" role="tab" aria-selected="true">Entrar</button>
-        <button id="registerMode" class="auth-switch-btn" type="button" role="tab" aria-selected="false">Criar conta</button>
-      </div>
-      <form id="loginForm" class="auth-form">
-        <label>
-          E-mail
-          <input id="loginEmail" type="email" autocomplete="email" required placeholder="produtor@agrojusto.com">
-        </label>
-        <label>
-          Senha
-          <input id="loginSenha" type="password" autocomplete="current-password" required placeholder="Digite sua senha">
-        </label>
-        <button class="btn" type="submit">Entrar na conta</button>
-      </form>
-      <form id="registerForm" class="auth-form hidden">
-        <label>
-          Nome do produtor
-          <input id="registerName" type="text" autocomplete="name" required placeholder="Ex: Maria da Silva">
-        </label>
-        <label>
-          E-mail
-          <input id="registerEmail" type="email" autocomplete="email" required placeholder="voce@email.com">
-        </label>
-        <label>
-          Senha
-          <input id="registerPassword" type="password" autocomplete="new-password" minlength="6" required placeholder="Crie uma senha segura">
-        </label>
-        <div id="passwordStrength" class="password-strength" aria-live="polite">
-          <div class="password-strength-bar"><span></span></div>
-          <strong id="passwordStrengthText">Digite uma senha</strong>
-          <small>Use letras maiusculas, minusculas, numeros e simbolos.</small>
-        </div>
-        <label>
-          Confirmar senha
-          <input id="registerPasswordConfirm" type="password" autocomplete="new-password" minlength="6" required placeholder="Repita sua senha">
-        </label>
-        <button class="btn" type="submit">Criar minha conta</button>
-      </form>
-      <button id="btnDemoLogin" class="btn secondary" type="button">Entrar com dados de demonstracao</button>
-      <p id="authMessage" class="badge auth-message hidden"></p>
-    </article>
-  </section>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(135deg, var(--bg), #edf6ee);
+        color: var(--text);
+        font-family: Arial, sans-serif;
+      }
 
-  <div id="appShell" class="hidden">
-    <nav class="tabs" aria-label="Navegacao principal">
-      <button class="tab-btn active" data-tab="inicio" type="button">Inicio</button>
-      <button class="tab-btn" data-tab="precificacao" type="button">Preco Justo</button>
-      <button class="tab-btn" data-tab="produtos" type="button">Produtos</button>
-      <button class="tab-btn" data-tab="maquinas" type="button">Maquinas</button>
-      <button class="tab-btn" data-tab="painel" type="button">Painel</button>
-    </nav>
+      .card {
+        max-width: 480px;
+        width: min(90vw, 480px);
+        padding: 2rem 1.5rem;
+        border-radius: 20px;
+        background: var(--card);
+        box-shadow: 0 20px 40px rgba(31, 94, 59, 0.12);
+        text-align: center;
+      }
 
-    <main class="page-wrap">
-    <section id="inicio" class="tab-panel active">
-      <article class="hero card">
-        <div>
-          <h2>Tecnologia simples para fortalecer o pequeno produtor</h2>
-          <p>
-            O AgroJusto calcula preco minimo e preco ideal com base em custos, oferta,
-            demanda e logistica, alem de conectar produtores no aluguel colaborativo de maquinas.
-          </p>
-          <div class="hero-actions">
-            <button class="btn" data-go="precificacao" type="button">Calcular preco</button>
-            <button class="btn secondary" data-go="maquinas" type="button">Ver maquinas</button>
-          </div>
-        </div>
-        <img src="https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=900&q=80" alt="Produtor no campo">
-      </article>
+      h1 {
+        margin: 0 0 0.75rem;
+        color: var(--green-dark);
+      }
 
-      <article class="grid-3">
-        <div class="card mini">
-          <h3>1. Precificacao inteligente</h3>
-          <p>Evite prejuizo com base real de custo e ajuste de mercado local simulado.</p>
-        </div>
-        <div class="card mini">
-          <h3>2. Logistica no calculo</h3>
-          <p>Distancia aumenta custo de transporte e entra automaticamente no preco.</p>
-        </div>
-        <div class="card mini">
-          <h3>3. Impacto social</h3>
-          <p>Mercado mais justo, menos dependencia de atravessadores e renda mais digna.</p>
-        </div>
-      </article>
-    </section>
+      p {
+        margin: 0.5rem 0;
+        color: var(--muted);
+        line-height: 1.5;
+      }
 
-    <section id="precificacao" class="tab-panel">
-      <article class="card">
-        <h2>Calculadora de Preco Justo</h2>
-        <p class="muted">Preencha os custos reais e o contexto do mercado para gerar uma sugestao de venda.</p>
+      a {
+        display: inline-block;
+        margin-top: 1rem;
+        padding: 0.8rem 1.2rem;
+        border-radius: 999px;
+        background: var(--green);
+        color: #fff;
+        text-decoration: none;
+        font-weight: 700;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card" aria-live="polite">
+      <h1>AgroJusto</h1>
+      <p>Redirecionando para a versão atual do sistema...</p>
+      <p>Se a página não abrir automaticamente, use o botão abaixo.</p>
+      <a href="http://localhost:5173/">Abrir AgroJusto</a>
+    </main>
 
-        <div class="form-grid">
-          <label>
-            Insumos (R$)
-            <input id="insumos" type="number" min="0" step="0.01" placeholder="0.00">
-          </label>
-          <label>
-            Mao de obra (R$)
-            <input id="maoDeObra" type="number" min="0" step="0.01" placeholder="0.00">
-          </label>
-          <label>
-            Transporte base (R$)
-            <input id="transporteBase" type="number" min="0" step="0.01" placeholder="0.00">
-          </label>
-          <label>
-            Manutencao (R$)
-            <input id="manutencao" type="number" min="0" step="0.01" placeholder="0.00">
-          </label>
-          <label>
-            Distancia (km)
-            <input id="distanciaKm" type="number" min="0" step="1" placeholder="Ex: 25">
-          </label>
-          <label>
-            Custo por km (R$)
-            <input id="custoKm" type="number" min="0" step="0.01" value="2.50">
-          </label>
-          <label>
-            Quantidade produzida (unidades)
-            <input id="quantidadeProduzida" type="number" min="0.01" step="0.01" required placeholder="Ex: 100">
-          </label>
-          <label>
-            Margem de seguranca (%)
-            <input id="margemLucro" type="number" min="0" step="0.1" value="10" required>
-          </label>
-          <label>
-            Oferta regional
-            <select id="oferta">
-              <option value="baixa">Baixa</option>
-              <option value="media" selected>Media</option>
-              <option value="alta">Alta</option>
-            </select>
-          </label>
-          <label>
-            Demanda regional
-            <select id="demanda">
-              <option value="baixa">Baixa</option>
-              <option value="media" selected>Media</option>
-              <option value="alta">Alta</option>
-            </select>
-          </label>
-        </div>
+    <script>
+      const appUrl = 'http://localhost:5173/';
+      window.location.replace(appUrl);
+    </script>
+  </body>
+</html>
 
-        <button id="btnCalcular" class="btn" type="button">Gerar sugestao</button>
-
-        <div id="resultadoPreco" class="result-box hidden" aria-live="polite">
-          <div>
-            <span>Preco minimo por unidade</span>
-            <strong id="precoMinimo">R$ 0,00</strong>
-          </div>
-          <div>
-            <span>Preco ideal por unidade</span>
-            <strong id="precoIdeal">R$ 0,00</strong>
-          </div>
-          <p id="resumoMercado" class="badge"></p>
-        </div>
-
-        <div class="cost-history">
-          <h3>Registro de custos</h3>
-          <form id="formCusto" class="form-grid">
-            <label>
-              Categoria
-              <select id="custoCategoria">
-                <option value="insumos">Insumos</option>
-                <option value="mao">Mao de obra</option>
-                <option value="transporteBase">Transporte</option>
-                <option value="manutencao">Manutencao</option>
-              </select>
-            </label>
-            <label>
-              Descricao
-              <input id="custoDescricao" type="text" required placeholder="Ex: Adubo organico">
-            </label>
-            <label>
-              Valor (R$)
-              <input id="custoValor" type="number" min="0.01" step="0.01" required placeholder="0,00">
-            </label>
             <label>
               Data
               <input id="custoData" type="date" required>
