@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAgro } from '../agroCore.js';
-import { aggregateCosts, addPriceHistory, calculateFairPrice, calculatePrice, validateFairPriceForm } from '../agroUtils.js';
+import { aggregateCosts, addPriceHistory, calculateFairPrice, validateFairPriceForm } from '../agroUtils.js';
 
 const currencyFormatter = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -73,6 +73,20 @@ export default function PricingPage() {
   }
 
   const currentPrice = result ? result.valorFinalSaca : 0;
+  const quantitySacas = Number(form.quantidadeSacas || 0);
+  const custoPorUnidade = result && quantitySacas > 0 ? result.prodTotal / quantitySacas : 0;
+  const precoMinimoPorUnidade = result ? result.precoSaca : 0;
+  const precoIdealPorUnidade = result ? result.valorFinalSaca : 0;
+  const lucroEstimadoTotal = result ? result.rendimentoTotal - result.prodTotal : 0;
+  const lucroEstimadoPorUnidade = result && quantitySacas > 0 ? lucroEstimadoTotal / quantitySacas : 0;
+
+  const resultMessages = result ? [
+    'Este é o custo estimado para produzir cada unidade do seu produto.',
+    quantitySacas > 0 ? `Com ${Number(quantitySacas).toLocaleString('pt-BR')} sacas produzidas, o custo por unidade fica em ${currencyFormatter.format(custoPorUnidade)}.` : 'A quantidade produzida precisa ser informada para detalhar o custo por unidade.',
+    `Vender abaixo de ${currencyFormatter.format(precoMinimoPorUnidade)} por saca pode causar prejuízo, considerando os custos informados.`,
+    `Este é o preço sugerido para cobrir os custos e alcançar a margem de lucro configurada: ${currencyFormatter.format(precoIdealPorUnidade)} por saca.`,
+    'Confira os preços praticados na sua região antes de definir o valor final de venda.',
+  ] : [];
 
   return (
     <section className="tab-panel active">
@@ -211,13 +225,77 @@ export default function PricingPage() {
                 <div className="result-card highlight">
                   <span className="result-label">💰 Preço Justo por Saca</span>
                   <strong className="result-price">{currencyFormatter.format(result.valorFinalSaca)}</strong>
+                  <span className="result-subtext">Valor sugerido para venda considerando os custos e a margem informada.</span>
                 </div>
 
-                <div className="result-list">
-                  <div className="result-item"><span>📦 Quantidade de sacas</span><strong>{Number(form.quantidadeSacas || 0).toLocaleString('pt-BR')} sacas</strong></div>
-                  <div className="result-item"><span>📊 Custo total de produção</span><strong>{currencyFormatter.format(result.prodTotal)}</strong></div>
-                  <div className="result-item"><span>📈 Lucro desejado</span><strong>{Number(form.lucroDesejado || 0).toFixed(2)}%</strong></div>
-                  <div className="result-item"><span>💵 Rendimento total estimado</span><strong>{currencyFormatter.format(result.rendimentoTotal)}</strong></div>
+                <div className="result-metric-grid">
+                  <div className="result-metric-card">
+                    <span className="result-metric-label">Custo de produção</span>
+                    <strong>{currencyFormatter.format(result.prodTotal)}</strong>
+                    <small>Total do cálculo atual</small>
+                  </div>
+                  <div className="result-metric-card success">
+                    <span className="result-metric-label">Preço mínimo</span>
+                    <strong>{currencyFormatter.format(precoMinimoPorUnidade)}</strong>
+                    <small>por saca</small>
+                  </div>
+                  <div className="result-metric-card accent">
+                    <span className="result-metric-label">Preço ideal</span>
+                    <strong>{currencyFormatter.format(precoIdealPorUnidade)}</strong>
+                    <small>por saca</small>
+                  </div>
+                  <div className="result-metric-card warn">
+                    <span className="result-metric-label">Lucro estimado</span>
+                    <strong>{currencyFormatter.format(lucroEstimadoTotal)}</strong>
+                    <small>no total da produção</small>
+                  </div>
+                </div>
+
+                <div className="result-summary-box">
+                  <h4>O que esse resultado significa?</h4>
+                  <ul className="meaning-list">
+                    {resultMessages.map((message) => (
+                      <li key={message}>{message}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="scenario-box">
+                  <h4>Exemplo prático da simulação</h4>
+                  <div className="scenario-grid">
+                    <div className="scenario-item">
+                      <span>Produto calculado</span>
+                      <strong>Produção atual</strong>
+                    </div>
+                    <div className="scenario-item">
+                      <span>Quantidade produzida</span>
+                      <strong>{Number(quantitySacas || 0).toLocaleString('pt-BR')} sacas</strong>
+                    </div>
+                    <div className="scenario-item">
+                      <span>Custo por unidade</span>
+                      <strong>{currencyFormatter.format(custoPorUnidade)}</strong>
+                    </div>
+                    <div className="scenario-item">
+                      <span>Preço mínimo por unidade</span>
+                      <strong>{currencyFormatter.format(precoMinimoPorUnidade)}</strong>
+                    </div>
+                    <div className="scenario-item">
+                      <span>Preço ideal por unidade</span>
+                      <strong>{currencyFormatter.format(precoIdealPorUnidade)}</strong>
+                    </div>
+                    <div className="scenario-item">
+                      <span>Receita estimada</span>
+                      <strong>{currencyFormatter.format(result.rendimentoTotal)}</strong>
+                    </div>
+                    <div className="scenario-item">
+                      <span>Lucro estimado por unidade</span>
+                      <strong>{currencyFormatter.format(lucroEstimadoPorUnidade)}</strong>
+                    </div>
+                    <div className="scenario-item">
+                      <span>Lucro estimado total</span>
+                      <strong>{currencyFormatter.format(lucroEstimadoTotal)}</strong>
+                    </div>
+                  </div>
                 </div>
               </>
             ) : (

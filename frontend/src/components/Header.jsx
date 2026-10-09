@@ -4,6 +4,7 @@ import agroLogo from '../assets/LOGO.png';
 
 export default function Header() {
   const { state, dispatch } = useAgro();
+  const showProfileButton = state.activeTab !== 'painel';
 
   function openProfileTab() {
     dispatch({ type: 'setTab', tab: 'perfil' });
@@ -28,7 +29,9 @@ export default function Header() {
       </div>
       <div className="top-actions">
         <span className="user-chip">{state.auth?.nome || state.profile?.nome || 'Visitante'}</span>
-        <button className="btn ghost" type="button" onClick={openProfileTab}>Editar perfil</button>
+        {showProfileButton && (
+          <button className="btn ghost" type="button" onClick={openProfileTab}>Editar perfil</button>
+        )}
         <button className="btn ghost" type="button" onClick={logout}>Sair</button>
       </div>
     </header>
