@@ -10,7 +10,8 @@ const app = createApp();
 // Conectar ao banco de dados e iniciar o servidor
 prisma
   .$connect()
-  .then(() => {
+  .then(async () => {
+    await prisma.$queryRaw`SELECT 1`;
     // eslint-disable-next-line no-console
     console.log("✓ Backend conectado com o banco de dados");
 
