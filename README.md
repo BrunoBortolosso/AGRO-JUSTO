@@ -35,7 +35,7 @@ Ajudar o produtor a:
 
 ## Como rodar localmente
 ### Pré-requisitos
-- Node.js (recomendado: LTS)
+- Node.js 20 ou superior (recomendado: LTS)
 - NPM
 
 ### 1) Backend

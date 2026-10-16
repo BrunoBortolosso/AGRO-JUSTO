@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon src/server.js",
+    "dev": "node --watch src/server.js",
     "start": "node src/server.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
@@ -26,7 +26,6 @@
     "yaml": "^2.8.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14",
     "prisma": "^7.8.0",
     "supertest": "^7.1.4"
   }

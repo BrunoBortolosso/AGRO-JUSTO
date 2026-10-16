@@ -113,16 +113,12 @@ ALTER TABLE `alugueis` ADD CONSTRAINT `alugueis_locatarioId_fkey` FOREIGN KEY (`
 
 -- RedefineIndex
 CREATE INDEX `alugueis_equipamentoId_idx` ON `alugueis`(`equipamentoId`);
-DROP INDEX `alugueis_equipamentoId_fkey` ON `alugueis`;
 
 -- RedefineIndex
 CREATE INDEX `alugueis_locadorId_idx` ON `alugueis`(`locadorId`);
-DROP INDEX `alugueis_locadorId_fkey` ON `alugueis`;
 
 -- RedefineIndex
 CREATE INDEX `custos_produtoId_idx` ON `custos`(`produtoId`);
-DROP INDEX `custos_produtoId_fkey` ON `custos`;
 
 -- RedefineIndex
 CREATE INDEX `precos_justos_produtoId_idx` ON `precos_justos`(`produtoId`);
-DROP INDEX `precos_justos_produtoId_fkey` ON `precos_justos`;
