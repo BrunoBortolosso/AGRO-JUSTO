@@ -83,6 +83,23 @@ describe('agroUtils', () => {
     expect(result.rendimentoTotal).toBe(12000);
   });
 
+  it('inclui os custos registrados no total e no preço justo por saca', () => {
+    const result = calculateFairPrice({
+      semente: 100,
+      veneno: 0,
+      adubo: 0,
+      frete: 0,
+      custosRegistrados: 50,
+      quantidadeSacas: 5,
+      lucroDesejado: 0,
+    });
+
+    expect(result.custosRegistrados).toBe(50);
+    expect(result.prodTotal).toBe(150);
+    expect(result.precoSaca).toBe(30);
+    expect(result.valorFinalSaca).toBe(30);
+  });
+
   it('aceita plantação, irrigação e colheita opcionais, deixando apenas frete obrigatório', () => {
     const validation = validateFairPriceForm({
       semente: 1000,

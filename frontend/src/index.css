@@ -2558,3 +2558,262 @@ dialog::backdrop {
     height: 180px;
   }
 }
+
+.pricing-shell .cost-section {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 0.35rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(46, 125, 79, 0.12);
+}
+
+.pricing-shell .cost-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.pricing-shell .cost-section-heading h3,
+.pricing-shell .cost-form h4 {
+  margin: 0.15rem 0 0;
+  color: var(--forest);
+  font-size: 1rem;
+}
+
+.pricing-shell .cost-total {
+  display: grid;
+  gap: 0.15rem;
+  text-align: right;
+}
+
+.pricing-shell .cost-total span {
+  color: #60796a;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.pricing-shell .cost-total strong {
+  color: var(--forest);
+  font-size: 1.05rem;
+}
+
+.pricing-shell .cost-calculation-note {
+  margin: -0.35rem 0 0;
+  color: #687b70;
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
+.pricing-shell .cost-history {
+  display: grid;
+  gap: 0;
+  max-height: 250px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  border: 1px solid rgba(46, 125, 79, 0.11);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.pricing-shell .cost-history-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  min-height: 58px;
+  padding: 0.65rem 0.8rem;
+}
+
+.pricing-shell .cost-history-row.is-editing {
+  background: #f2f8f3;
+}
+
+.pricing-shell .cost-history-row + .cost-history-row {
+  border-top: 1px solid rgba(46, 125, 79, 0.09);
+}
+
+.pricing-shell .cost-history-description {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.pricing-shell .cost-history-description strong {
+  overflow-wrap: anywhere;
+  color: var(--forest);
+  font-size: 0.86rem;
+}
+
+.pricing-shell .cost-history-description span {
+  color: #687b70;
+  font-size: 0.74rem;
+}
+
+.pricing-shell .cost-history-value {
+  flex-shrink: 0;
+  color: var(--forest);
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.pricing-shell .cost-history-actions {
+  display: flex;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.pricing-shell .cost-history-actions button,
+.pricing-shell .cost-cancel-button {
+  min-height: 34px;
+  border: 1px solid #dbe7df;
+  border-radius: 8px;
+  background: #fff;
+  padding: 0.35rem 0.55rem;
+  color: var(--forest);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pricing-shell .cost-history-actions button:hover,
+.pricing-shell .cost-cancel-button:hover {
+  border-color: rgba(46, 125, 79, 0.4);
+  background: #f4f9f5;
+}
+
+.pricing-shell .cost-history-actions button:last-child {
+  color: #934b42;
+}
+
+.pricing-shell .cost-history-actions button:last-child:hover {
+  border-color: rgba(181, 93, 79, 0.35);
+  background: #fff7f5;
+}
+
+.pricing-shell .cost-empty-state {
+  margin: 0;
+  padding: 0.9rem;
+  border: 1px dashed rgba(46, 125, 79, 0.2);
+  border-radius: 12px;
+  color: #60796a;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.pricing-shell .cost-form {
+  display: grid;
+  gap: 0.7rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.pricing-shell .cost-form-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr);
+  gap: 0.65rem;
+}
+
+.pricing-shell .cost-form-fields label {
+  gap: 0.35rem;
+  color: #496255;
+  font-size: 0.76rem;
+}
+
+.pricing-shell .cost-form-fields label:first-child {
+  grid-column: 1 / -1;
+}
+
+.pricing-shell .cost-form-fields input,
+.pricing-shell .cost-form-fields select {
+  min-height: 42px;
+  border-color: #dbe7df;
+  border-radius: 9px;
+  background: #fff;
+  padding: 0.6rem 0.7rem;
+  font-size: 0.86rem;
+  box-shadow: none;
+}
+
+.pricing-shell .cost-value-input {
+  display: flex;
+  align-items: center;
+  min-height: 42px;
+  border: 1px solid #dbe7df;
+  border-radius: 9px;
+  background: #fff;
+  padding-left: 0.7rem;
+  color: #60796a;
+  font-size: 0.82rem;
+}
+
+.pricing-shell .cost-value-input input {
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.pricing-shell .cost-value-input:focus-within {
+  outline: 2px solid rgba(46, 125, 79, 0.18);
+  outline-offset: 1px;
+}
+
+.pricing-shell .cost-form-error {
+  margin: 0;
+  color: #8a3c37;
+  font-size: 0.8rem;
+}
+
+.pricing-shell .cost-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pricing-shell .cost-form-actions > .btn {
+  justify-self: start;
+  min-height: 40px;
+  padding: 0.6rem 1rem;
+  font-size: 0.82rem;
+}
+
+@media (max-width: 480px) {
+  .pricing-shell .cost-section-heading {
+    align-items: flex-start;
+  }
+
+  .pricing-shell .cost-form-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .pricing-shell .cost-form-fields label:first-child {
+    grid-column: auto;
+  }
+
+  .pricing-shell .cost-form-actions {
+    flex-wrap: wrap;
+  }
+
+  .pricing-shell .cost-form-actions > .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 560px) {
+  .pricing-shell .cost-history-row {
+    flex-wrap: wrap;
+  }
+
+  .pricing-shell .cost-history-description {
+    flex: 1 1 calc(100% - 100px);
+  }
+
+  .pricing-shell .cost-history-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}

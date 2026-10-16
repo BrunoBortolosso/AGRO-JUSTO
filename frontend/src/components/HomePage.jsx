@@ -1,9 +1,6 @@
-import { useAgro } from '../agroCore.js';
 import agroLogo from '../assets/LOGO.png';
 
 export default function HomePage() {
-  const { dispatch } = useAgro();
-
   return (
     <section className="tab-panel active home-page">
       <article className="hero card hero-section">

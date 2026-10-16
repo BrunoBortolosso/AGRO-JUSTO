@@ -87,6 +87,7 @@ export function calculateFairPrice({
   colheitaDiaria = 0,
   colheitaDias = 0,
   frete = 0,
+  custosRegistrados = 0,
   quantidadeSacas = 0,
   lucroDesejado = 0,
 } = {}) {
@@ -97,7 +98,8 @@ export function calculateFairPrice({
   const maoObraColheita = toNumber(colheitaDiaria) * toNumber(colheitaDias);
   const plantacao = toNumber(plantacaoAluguel) + toNumber(plantacaoCombustivel) + maoObraPlantacao;
   const colheita = toNumber(colheitaAluguel) + toNumber(colheitaCombustivel) + maoObraColheita + toNumber(frete);
-  const prodTotal = insumos + plantacao + colheita;
+  const totalCustosRegistrados = toNumber(custosRegistrados);
+  const prodTotal = insumos + plantacao + colheita + totalCustosRegistrados;
   const qtdSacas = toNumber(quantidadeSacas);
   const precoSaca = qtdSacas > 0 ? prodTotal / qtdSacas : 0;
   const percentualLucro = toNumber(lucroDesejado) / 100;
@@ -108,6 +110,7 @@ export function calculateFairPrice({
     insumos,
     plantacao,
     colheita,
+    custosRegistrados: totalCustosRegistrados,
     prodTotal,
     precoSaca,
     valorFinalSaca,

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAgro } from '../agroCore.js';
-import { aggregateCosts, addPriceHistory, calculateFairPrice, calculatePrice, validateFairPriceForm } from '../agroUtils.js';
+import { addPriceHistory, calculateFairPrice, validateFairPriceForm } from '../agroUtils.js';
 
 const currencyFormatter = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -25,13 +25,42 @@ const defaultForm = {
   lucroDesejado: '',
 };
 
+const costCategories = [
+  { value: 'INSUMO', label: 'Insumos' },
+  { value: 'MAO_DE_OBRA', label: 'Mão de obra' },
+  { value: 'TRANSPORTE', label: 'Transporte' },
+  { value: 'MANUTENCAO', label: 'Manutenção' },
+  { value: 'OUTRO', label: 'Outro' },
+];
+
+function parseCostAmount(value) {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : Number.NaN;
+  const normalized = String(value ?? '').trim().replace(/\s|R\$/gi, '');
+  if (!normalized) return Number.NaN;
+  const decimalNormalized = normalized.includes(',')
+    ? normalized.replace(/\./g, '').replace(',', '.')
+    : normalized;
+  const amount = Number(decimalNormalized);
+  return Number.isFinite(amount) ? amount : Number.NaN;
+}
+
+function getCostCategoryLabel(category) {
+  const knownCategory = costCategories.find((item) => item.value === category);
+  if (knownCategory) return knownCategory.label;
+  const legacyLabels = { Operacao: 'Operação', Logistica: 'Logística' };
+  return legacyLabels[category] || category || 'Outro';
+}
+
 export default function PricingPage() {
   const { state, dispatch } = useAgro();
   const [form, setForm] = useState(defaultForm);
   const [error, setError] = useState('');
   const [result, setResult] = useState(null);
   const [costName, setCostName] = useState('');
-  const [costValue, setCostValue] = useState(0);
+  const [costCategory, setCostCategory] = useState('OUTRO');
+  const [costValue, setCostValue] = useState('');
+  const [costError, setCostError] = useState('');
+  const [editingCostId, setEditingCostId] = useState('');
 
   function updateForm(field, value) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -39,11 +68,47 @@ export default function PricingPage() {
 
   function addCost(event) {
     event.preventDefault();
-    if (!costName.trim()) return;
-    const newCost = { id: crypto.randomUUID(), nome: costName, valor: Number(costValue) || 0, categoria: 'Operacao' };
-    dispatch({ type: 'setCosts', costs: [...state.costs, newCost] });
+    const amount = parseCostAmount(costValue);
+    if (!costName.trim() || !Number.isFinite(amount) || amount < 0) {
+      setCostError('Informe o nome do custo e um valor válido.');
+      return;
+    }
+    const currentCosts = Array.isArray(state.costs) ? state.costs : [];
+    const nextCost = {
+      id: editingCostId || crypto.randomUUID(),
+      nome: costName.trim(),
+      valor: amount,
+      categoria: costCategory,
+    };
+    const nextCosts = editingCostId
+      ? currentCosts.map((cost) => (cost.id === editingCostId ? nextCost : cost))
+      : [...currentCosts, nextCost];
+    dispatch({ type: 'setCosts', costs: nextCosts });
+    resetCostForm();
+  }
+
+  function startEditingCost(cost) {
+    setEditingCostId(cost.id);
+    setCostName(cost.nome || '');
+    setCostCategory(cost.categoria || 'OUTRO');
+    setCostValue(String(cost.valor ?? ''));
+    setCostError('');
+  }
+
+  function deleteCost(costId) {
+    const confirmed = window.confirm('Deseja excluir este custo?');
+    if (!confirmed) return;
+    const currentCosts = Array.isArray(state.costs) ? state.costs : [];
+    dispatch({ type: 'setCosts', costs: currentCosts.filter((cost) => cost.id !== costId) });
+    if (editingCostId === costId) resetCostForm();
+  }
+
+  function resetCostForm() {
+    setEditingCostId('');
     setCostName('');
-    setCostValue(0);
+    setCostCategory('OUTRO');
+    setCostValue('');
+    setCostError('');
   }
 
   function calculate() {
@@ -55,7 +120,10 @@ export default function PricingPage() {
     }
 
     const values = validation.values;
-    const nextResult = calculateFairPrice(values);
+    const nextResult = calculateFairPrice({
+      ...values,
+      custosRegistrados: getCostsTotal(state.costs),
+    });
     setResult(nextResult);
     setError('');
 
@@ -216,6 +284,9 @@ export default function PricingPage() {
                 <div className="result-list">
                   <div className="result-item"><span>📦 Quantidade de sacas</span><strong>{Number(form.quantidadeSacas || 0).toLocaleString('pt-BR')} sacas</strong></div>
                   <div className="result-item"><span>📊 Custo total de produção</span><strong>{currencyFormatter.format(result.prodTotal)}</strong></div>
+                  {result.custosRegistrados > 0 && (
+                    <div className="result-item"><span>Custos registrados incluídos</span><strong>{currencyFormatter.format(result.custosRegistrados)}</strong></div>
+                  )}
                   <div className="result-item"><span>📈 Lucro desejado</span><strong>{Number(form.lucroDesejado || 0).toFixed(2)}%</strong></div>
                   <div className="result-item"><span>💵 Rendimento total estimado</span><strong>{currencyFormatter.format(result.rendimentoTotal)}</strong></div>
                 </div>
@@ -226,25 +297,76 @@ export default function PricingPage() {
               </div>
             )}
 
-            <div className="panel-header compact result-subheader">
-              <div>
-                <span className="panel-kicker">Custos</span>
-                <h3>Registrados</h3>
+            <section className="cost-section" aria-labelledby="registered-costs-title">
+              <div className="cost-section-heading">
+                <div>
+                  <span className="panel-kicker">Despesas</span>
+                  <h3 id="registered-costs-title">Custos registrados</h3>
+                </div>
+                <div className="cost-total" aria-live="polite">
+                  <span>Total que entra no cálculo</span>
+                  <strong>{currencyFormatter.format(getCostsTotal(state.costs))}</strong>
+                </div>
               </div>
-            </div>
-            <CostHistory costs={state.costs || []} />
 
-            <form className="cost-form" onSubmit={addCost}>
-              <label>
-                Custo
-                <input type="text" value={costName} onChange={(e) => setCostName(e.target.value)} placeholder="Nome do custo" required />
-              </label>
-              <label>
-                Valor
-                <input type="number" value={costValue} onChange={(e) => setCostValue(Number(e.target.value))} min="0" required />
-              </label>
-              <button className="btn secondary" type="submit">Aplicar custo</button>
-            </form>
+              <p className="cost-calculation-note">
+                Esse total é somado ao preço justo. Não cadastre aqui despesas que já informou nos campos do cálculo.
+              </p>
+
+              <CostHistory
+                costs={state.costs || []}
+                editingCostId={editingCostId}
+                onEdit={startEditingCost}
+                onDelete={deleteCost}
+              />
+
+              <form className="cost-form" onSubmit={addCost}>
+                <h4>{editingCostId ? 'Editar custo' : 'Adicionar custo'}</h4>
+                <div className="cost-form-fields">
+                  <label>
+                    Nome do custo
+                    <input type="text" value={costName} onChange={(e) => setCostName(e.target.value)} placeholder="Ex.: Embalagens" required />
+                  </label>
+                  <label>
+                    Categoria
+                    <select value={costCategory} onChange={(e) => setCostCategory(e.target.value)}>
+                      {editingCostId && !costCategories.some((category) => category.value === costCategory) && (
+                        <option value={costCategory}>{getCostCategoryLabel(costCategory)}</option>
+                      )}
+                      {costCategories.map((category) => (
+                        <option value={category.value} key={category.value}>{category.label}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Valor (R$)
+                    <div className="cost-value-input">
+                      <span aria-hidden="true">R$</span>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={costValue}
+                        onChange={(e) => setCostValue(e.target.value)}
+                        placeholder="0,00"
+                        aria-label="Valor do custo em reais"
+                        required
+                      />
+                    </div>
+                  </label>
+                </div>
+                {costError && <p className="cost-form-error" role="alert">{costError}</p>}
+                <div className="cost-form-actions">
+                  <button className="btn secondary" type="submit">
+                    {editingCostId ? 'Salvar alterações' : 'Adicionar custo'}
+                  </button>
+                  {editingCostId && (
+                    <button className="cost-cancel-button" type="button" onClick={resetCostForm}>
+                      Cancelar
+                    </button>
+                  )}
+                </div>
+              </form>
+            </section>
           </div>
         </div>
       </article>
@@ -252,13 +374,41 @@ export default function PricingPage() {
   );
 }
 
-function CostHistory({ costs }) {
+function CostHistory({ costs, editingCostId, onEdit, onDelete }) {
+  if (!costs?.length) {
+    return (
+      <p className="cost-empty-state">
+        Nenhum custo registrado ainda. Adicione o primeiro custo abaixo.
+      </p>
+    );
+  }
+
   return (
     <div className="cost-history">
       {(costs || []).map((cost) => (
-        <div className="history-row" key={cost.id}><span>{cost.nome}</span><strong>{currencyFormatter.format(Number(cost.valor || 0))}</strong></div>
+        <div className={`cost-history-row${editingCostId === cost.id ? ' is-editing' : ''}`} key={cost.id}>
+          <div className="cost-history-description">
+            <strong>{cost.nome}</strong>
+            <span>{getCostCategoryLabel(cost.categoria)}</span>
+          </div>
+          <strong className="cost-history-value">{currencyFormatter.format(parseCostAmount(cost.valor) || 0)}</strong>
+          <div className="cost-history-actions">
+            <button type="button" onClick={() => onEdit(cost)} aria-label={`Editar ${cost.nome}`}>
+              Editar
+            </button>
+            <button type="button" onClick={() => onDelete(cost.id)} aria-label={`Excluir ${cost.nome}`}>
+              Excluir
+            </button>
+          </div>
+        </div>
       ))}
-      <div className="history-row total"><span>Total</span><strong>{currencyFormatter.format(Number(aggregateCosts(costs) || 0))}</strong></div>
     </div>
   );
+}
+
+function getCostsTotal(costs = []) {
+  return (Array.isArray(costs) ? costs : []).reduce((total, cost) => {
+    const amount = parseCostAmount(cost.valor);
+    return total + (Number.isFinite(amount) ? amount : 0);
+  }, 0);
 }
