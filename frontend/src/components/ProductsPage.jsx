@@ -29,6 +29,10 @@ export default function ProductsPage() {
       return;
     }
 
+    if (state.token === 'demo-token') {
+      return;
+    }
+
     let active = true;
 
     async function loadProducts() {
@@ -54,7 +58,7 @@ export default function ProductsPage() {
     return () => {
       active = false;
     };
-  }, [dispatch, state.authStatus, state.auth?.id]);
+  }, [dispatch, state.authStatus, state.auth?.id, state.token]);
 
   function resetProductForm() {
     setProductForm({
@@ -134,6 +138,13 @@ export default function ProductsPage() {
         ...(productForm.imagem ? { imagem: productForm.imagem } : {})
       };
 
+      if (state.token === 'demo-token') {
+        const created = { ...payload, id: crypto.randomUUID(), createdAt: new Date().toISOString() };
+        dispatch({ type: 'setProducts', products: [created, ...(state.products || [])] });
+        resetProductForm();
+        return;
+      }
+
       const created = await apiClient.post('/products', payload);
       dispatch({ type: 'setProducts', products: [created, ...(state.products || [])] });
       resetProductForm();
@@ -182,6 +193,17 @@ export default function ProductsPage() {
         ...(productForm.imagem ? { imagem: productForm.imagem } : {})
       };
 
+      if (state.token === 'demo-token') {
+        dispatch({
+          type: 'setProducts',
+          products: (state.products || []).map((product) => product.id === editingProductId
+            ? { ...product, ...payload }
+            : product)
+        });
+        resetProductForm();
+        return;
+      }
+
       const updated = await apiClient.patch(`/products/${editingProductId}`, payload);
       dispatch({
         type: 'setProducts',
@@ -201,6 +223,13 @@ export default function ProductsPage() {
 
     setDeletingId(id);
     setMessage('');
+
+    if (state.token === 'demo-token') {
+      dispatch({ type: 'setProducts', products: (state.products || []).filter((product) => product.id !== id) });
+      if (editingProductId === id) resetProductForm();
+      setDeletingId(null);
+      return;
+    }
 
     try {
       await apiClient.del(`/products/${id}`);

@@ -15,11 +15,22 @@ const civilDate = z.union([z.date(), civilDateString]);
 
 const CreateRentalSchema = z.object({
   machineId: z.string().trim().min(1),
-  tenant: z.string().trim().min(1),
+  tenant: z.string().trim().min(1).optional(),
   start: civilDate,
   end: civilDate,
   notes: z.string().trim().optional()
 }).strict().superRefine((value, context) => {
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
+
+  if (value.start < today) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["start"],
+      message: "A data inicial não pode estar no passado."
+    });
+  }
+
   if (value.end < value.start) {
     context.addIssue({
       code: z.ZodIssueCode.custom,

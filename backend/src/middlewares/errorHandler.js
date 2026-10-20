@@ -16,6 +16,8 @@ function fromPrismaError(error) {
       return notFound("Recurso não encontrado.");
     case "P2003":
       return badRequest("A referência informada é inválida.");
+    case "P2034":
+      return conflict("A máquina teve uma reserva concorrente. Verifique as datas e tente novamente.");
     default:
       return null;
   }

@@ -4,19 +4,19 @@ import { prisma } from "../db/prisma.js";
 import { auth } from "../middlewares/auth.js";
 import { validate } from "../middlewares/validate.js";
 import { AppError, conflict, notFound } from "../utils/errors.js";
+import { inclusiveDays, rentalOverlapFilter } from "../services/rentals.js";
 import { CreateRentalSchema } from "../validation/rentals.js";
 
 const router = express.Router();
-const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 
-function inclusiveDays(start, end) {
-  return Math.floor((end.getTime() - start.getTime()) / MILLISECONDS_PER_DAY) + 1;
-}
-
-function serializeRental(rental) {
+function serializeRental(rental, userId) {
   return {
     id: rental.id,
-    tenant: rental.tenant,
+    tenant: rental.locatario?.nome || rental.tenant,
+    renterId: rental.locatarioId,
+    ownerId: rental.usuarioId,
+    isOwner: rental.usuarioId === userId,
+    isRenter: rental.locatarioId === userId,
     machineId: rental.machineId,
     machineName: rental.equipamento.nome,
     start: rental.start,
@@ -24,6 +24,7 @@ function serializeRental(rental) {
     notes: rental.notes,
     dailyPrice: Number(rental.dailyPrice),
     total: Number(rental.total),
+    status: rental.status,
     finished: rental.finalizadoEm !== null,
     createdAt: rental.createdAt,
     finishedAt: rental.finalizadoEm
@@ -31,19 +32,26 @@ function serializeRental(rental) {
 }
 
 const rentalInclude = {
-  equipamento: { select: { nome: true } }
+  equipamento: { select: { nome: true } },
+  locador: { select: { id: true, nome: true } },
+  locatario: { select: { id: true, nome: true } }
 };
 
 router.use(auth);
 
 router.get("/", async (req, res) => {
   const rentals = await prisma.aluguel.findMany({
-    where: { usuarioId: req.user.id },
+    where: {
+      OR: [
+        { usuarioId: req.user.id },
+        { locatarioId: req.user.id }
+      ]
+    },
     orderBy: { start: "desc" },
     include: rentalInclude
   });
 
-  res.json(rentals.map(serializeRental));
+  res.json(rentals.map((rental) => serializeRental(rental, req.user.id)));
 });
 
 router.post("/", validate(CreateRentalSchema), async (req, res) => {
@@ -51,42 +59,37 @@ router.post("/", validate(CreateRentalSchema), async (req, res) => {
     const machine = await tx.equipamento.findFirst({
       where: {
         id: req.body.machineId,
-        usuarioId: req.user.id,
         excluidoEm: null
       }
     });
     if (!machine) throw notFound("Máquina não encontrada.");
-    if (!machine.disponibilidade) throw conflict("Máquina indisponível.");
+    if (machine.usuarioId === req.user.id) {
+      throw conflict("Não é possível alugar uma máquina cadastrada pela própria conta.");
+    }
 
     const activeRental = await tx.aluguel.findFirst({
-      where: {
-        machineId: machine.id,
-        usuarioId: req.user.id,
-        finalizadoEm: null
-      },
+      where: rentalOverlapFilter(machine.id, req.body.start, req.body.end),
       select: { id: true }
     });
-    if (activeRental) throw conflict("Máquina já possui um aluguel ativo.");
+    if (activeRental) throw conflict("A máquina já está reservada nesse período.");
+
+    if (!machine.disponibilidade) {
+      const existingActiveRental = await tx.aluguel.findFirst({
+        where: { machineId: machine.id, status: "ATIVO", finalizadoEm: null },
+        select: { id: true }
+      });
+      if (!existingActiveRental) throw conflict("Máquina indisponível.");
+    }
 
     const days = inclusiveDays(req.body.start, req.body.end);
     const dailyPrice = Number(machine.valorDia);
     const total = Number((days * dailyPrice).toFixed(2));
-    const reserved = await tx.equipamento.updateMany({
-      where: {
-        id: machine.id,
-        usuarioId: req.user.id,
-        excluidoEm: null,
-        disponibilidade: true
-      },
-      data: { disponibilidade: false }
-    });
-    if (!reserved.count) throw conflict("Máquina indisponível.");
-
     return tx.aluguel.create({
       data: {
         machineId: machine.id,
-        usuarioId: req.user.id,
-        tenant: req.body.tenant,
+        usuarioId: machine.usuarioId,
+        locatarioId: req.user.id,
+        tenant: req.user.nome,
         start: req.body.start,
         end: req.body.end,
         dailyPrice,
@@ -96,9 +99,9 @@ router.post("/", validate(CreateRentalSchema), async (req, res) => {
       },
       include: rentalInclude
     });
-  });
+  }, { isolationLevel: "Serializable" });
 
-  res.status(201).json(serializeRental(rental));
+  res.status(201).json(serializeRental(rental, req.user.id));
 });
 
 router.post("/:id/finish", async (req, res) => {
@@ -131,10 +134,19 @@ router.post("/:id/finish", async (req, res) => {
       throw new AppError("Aluguel já finalizado.", 409, "RENTAL_ALREADY_FINISHED");
     }
 
-    await tx.equipamento.updateMany({
-      where: { id: rentalRecord.machineId, usuarioId: req.user.id },
-      data: { disponibilidade: true }
+    const remainingActiveRentals = await tx.aluguel.count({
+      where: {
+        machineId: rentalRecord.machineId,
+        status: "ATIVO",
+        finalizadoEm: null
+      }
     });
+    if (!remainingActiveRentals) {
+      await tx.equipamento.updateMany({
+        where: { id: rentalRecord.machineId, usuarioId: req.user.id },
+        data: { disponibilidade: true }
+      });
+    }
 
     return tx.aluguel.findUnique({
       where: { id: rentalRecord.id },
@@ -142,7 +154,7 @@ router.post("/:id/finish", async (req, res) => {
     });
   });
 
-  res.json(serializeRental(rental));
+  res.json(serializeRental(rental, req.user.id));
 });
 
 export { router as rentalsRouter };

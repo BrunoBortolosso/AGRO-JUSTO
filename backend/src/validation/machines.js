@@ -9,4 +9,6 @@ const CreateMachineSchema = z.object({
   imagem: z.string().url().optional()
 }).strict();
 
-export { CreateMachineSchema };
+const UpdateMachineSchema = CreateMachineSchema.partial().strict();
+
+export { CreateMachineSchema, UpdateMachineSchema };

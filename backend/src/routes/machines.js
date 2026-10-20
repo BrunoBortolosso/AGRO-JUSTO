@@ -4,7 +4,7 @@ import { prisma } from "../db/prisma.js";
 import { auth } from "../middlewares/auth.js";
 import { validate } from "../middlewares/validate.js";
 import { badRequest, notFound } from "../utils/errors.js";
-import { CreateMachineSchema } from "../validation/machines.js";
+import { CreateMachineSchema, UpdateMachineSchema } from "../validation/machines.js";
 
 const router = express.Router();
 const machineSelect = {
@@ -19,6 +19,18 @@ const machineSelect = {
   dataCadastro: true
 };
 
+const catalogMachineSelect = {
+  ...machineSelect,
+  usuarioId: true,
+  usuario: {
+    select: { nome: true, regiao: true }
+  },
+  alugueis: {
+    where: { status: "ATIVO", finalizadoEm: null },
+    select: { start: true, end: true }
+  }
+};
+
 function serializeMachine(machine) {
   return {
     id: machine.id,
@@ -30,6 +42,16 @@ function serializeMachine(machine) {
     imagem: machine.imagem,
     disponibilidade: machine.disponibilidade,
     createdAt: machine.dataCadastro
+  };
+}
+
+function serializeCatalogMachine(machine) {
+  return {
+    ...serializeMachine(machine),
+    ownerId: machine.usuarioId,
+    proprietario: machine.usuario.nome,
+    localizacao: machine.usuario.regiao || "Região não informada",
+    activeRentals: machine.alugueis.map(({ start, end }) => ({ start, end }))
   };
 }
 
@@ -54,6 +76,16 @@ router.get("/", async (req, res) => {
   res.json(machines.map(serializeMachine));
 });
 
+router.get("/catalog", async (_req, res) => {
+  const machines = await prisma.equipamento.findMany({
+    where: { excluidoEm: null },
+    orderBy: { nome: "asc" },
+    select: catalogMachineSelect
+  });
+
+  res.json(machines.map(serializeCatalogMachine));
+});
+
 router.post("/", validate(CreateMachineSchema), async (req, res) => {
   const { nome, preco, tipo, condicoes, dias, imagem } = req.body;
   const machine = await prisma.equipamento.create({
@@ -71,6 +103,26 @@ router.post("/", validate(CreateMachineSchema), async (req, res) => {
   });
 
   res.status(201).json(serializeMachine(machine));
+});
+
+router.patch("/:id", validate(UpdateMachineSchema), async (req, res) => {
+  const id = parseIdParam(req);
+  const data = {
+    ...(req.body.nome !== undefined ? { nome: req.body.nome } : {}),
+    ...(req.body.preco !== undefined ? { valorDia: req.body.preco } : {}),
+    ...(req.body.tipo !== undefined ? { tipo: req.body.tipo } : {}),
+    ...(req.body.condicoes !== undefined ? { condicoes: req.body.condicoes } : {}),
+    ...(req.body.dias !== undefined ? { dias: req.body.dias } : {}),
+    ...(req.body.imagem !== undefined ? { imagem: req.body.imagem } : {})
+  };
+  const updated = await prisma.equipamento.updateMany({
+    where: { id, usuarioId: req.user.id, excluidoEm: null },
+    data
+  });
+  if (!updated.count) throw notFound("Máquina não encontrada.");
+
+  const machine = await prisma.equipamento.findUnique({ where: { id }, select: machineSelect });
+  res.json(serializeMachine(machine));
 });
 
 router.delete("/:id", async (req, res) => {
