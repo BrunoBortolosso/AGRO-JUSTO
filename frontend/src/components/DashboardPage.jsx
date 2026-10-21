@@ -301,10 +301,10 @@ export default function DashboardPage() {
   }
 
   const metricCards = [
-    { label: 'Produtos', value: products.length, hint: `${totalAvailableQuantity} unidades disponíveis`, icon: '🌱' },
-    { label: 'Máquinas', value: machines.length, hint: `${availableMachines} disponíveis`, icon: '🚜' },
-    { label: 'Custos', value: currencyFormatter.format(totalCosts), hint: 'totais registrados', icon: '💰' },
-    { label: 'Preço justo', value: latestPrice ? currencyFormatter.format(latestPrice) : '—', hint: latestPricing ? `Último cálculo • ${new Date(latestPricing.data).toLocaleDateString('pt-BR')}` : 'Sem cálculo registrado', icon: '📊' }
+    { label: 'Produtos', value: products.length, hint: `${totalAvailableQuantity} unidades disponíveis`, icon: 'P' },
+    { label: 'Máquinas', value: machines.length, hint: `${availableMachines} disponíveis`, icon: 'M' },
+    { label: 'Custos', value: currencyFormatter.format(totalCosts), hint: 'totais registrados', icon: 'R$' },
+    { label: 'Preço justo', value: latestPrice ? currencyFormatter.format(latestPrice) : '—', hint: latestPricing ? `Último cálculo • ${new Date(latestPricing.data).toLocaleDateString('pt-BR')}` : 'Sem cálculo registrado', icon: 'J' }
   ];
 
   const recentProducts = products.slice(0, 3);
@@ -331,7 +331,7 @@ export default function DashboardPage() {
         <div className="dashboard-summary">
           {metricCards.map((card) => (
             <div className="dashboard-card" key={card.label}>
-              <div className="metric-icon">{card.icon}</div>
+              <div className={`metric-icon${card.icon ? '' : ' metric-icon--empty'}`} aria-hidden="true">{card.icon || '•'}</div>
               <div className="metric-content">
                 <span className="metric-label">{card.label}</span>
                 <strong>{card.value}</strong>

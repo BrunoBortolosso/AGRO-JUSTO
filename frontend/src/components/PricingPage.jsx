@@ -181,7 +181,7 @@ export default function PricingPage() {
 
             <div className="calc-section">
               <div className="section-title-row">
-                <span className="section-icon">🌱</span>
+                <span className="section-icon" aria-hidden="true">I</span>
                 <h4>Insumos</h4>
               </div>
               <div className="field-grid">
@@ -206,7 +206,7 @@ export default function PricingPage() {
 
             <div className="calc-section">
               <div className="section-title-row">
-                <span className="section-icon">🚜</span>
+                <span className="section-icon" aria-hidden="true">P</span>
                 <h4>Plantação</h4>
               </div>
               <div className="field-grid">
@@ -231,7 +231,7 @@ export default function PricingPage() {
 
             <div className="calc-section">
               <div className="section-title-row">
-                <span className="section-icon">🌾</span>
+                <span className="section-icon" aria-hidden="true">C</span>
                 <h4>Colheita</h4>
               </div>
               <div className="field-grid">
@@ -260,7 +260,7 @@ export default function PricingPage() {
 
             <div className="calc-section">
               <div className="section-title-row">
-                <span className="section-icon">📦</span>
+                <span className="section-icon" aria-hidden="true">S</span>
                 <h4>Produção</h4>
               </div>
               <div className="field-grid compact-grid">
