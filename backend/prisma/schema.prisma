@@ -41,6 +41,7 @@ model Usuario {
   tipoUsuario  TipoUsuario
   telefone     String?
   regiao       String?
+  bio          String?     @db.Text
   dataCadastro DateTime    @default(now())
 
   produtos                 Produto[]
@@ -78,7 +79,7 @@ model Produto {
   regiao         String?
   descricao      String?  @db.Text
   preco          Decimal  @db.Decimal(10, 2)
-  imagem         String?
+  imagem         String?  @db.LongText
   dataCadastro   DateTime @default(now())
 
   usuario      Usuario      @relation(fields: [usuarioId], references: [id])
@@ -150,7 +151,9 @@ model Equipamento {
   tipo            String
   condicoes       String
   dias            Decimal  @db.Decimal(10, 2)
-  imagem          String?
+  imagem          String?  @db.LongText
+  localizacao     String?
+  proprietario    String?
   valorDia        Decimal  @db.Decimal(10, 2)
   disponibilidade Boolean  @default(true)
   excluidoEm      DateTime?

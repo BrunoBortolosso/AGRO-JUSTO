@@ -108,13 +108,13 @@ paths:
         '401': { $ref: '#/components/responses/UnauthorizedError' }
     patch:
       tags: [Perfil]
-      summary: Atualiza o nome ou regiao do perfil
+      summary: Atualiza nome, regiao e bio do perfil
       requestBody:
         required: true
         content:
           application/json:
             schema: { $ref: '#/components/schemas/ProfileUpdateRequest' }
-            example: { nome: Maria Santos, regiao: Sudeste }
+            example: { nome: Maria Santos, regiao: Sudeste, bio: Produtora rural }
       responses:
         '200':
           description: Perfil atualizado
@@ -482,11 +482,12 @@ components:
       required: [id, nome, email]
       properties:
         id: { type: string, example: user-id }
-        nome: { type: string, example: Maria Silva }
+          nome: { type: string, example: Maria Silva }
         email: { type: string, format: email, example: maria@example.com }
         tipoUsuario: { type: string, example: PRODUTOR }
         telefone: { type: string, nullable: true }
         regiao: { type: string, nullable: true, example: Sul }
+        bio: { type: string, nullable: true }
         createdAt: { type: string, format: date-time }
     Session:
       type: object
@@ -517,6 +518,7 @@ components:
       properties:
         nome: { type: string }
         regiao: { type: string, nullable: true }
+        bio: { type: string, maxLength: 2000, nullable: true }
     Product:
       type: object
       required: [id, nome, quantidade, unidade, cultivo, regiao, preco, createdAt]
@@ -527,8 +529,9 @@ components:
         unidade: { type: string, example: saca }
         cultivo: { type: string, example: organico }
         regiao: { type: string }
+        descricao: { type: string, nullable: true }
         preco: { type: number, format: double, example: 75.5 }
-        imagem: { type: string, format: uri, nullable: true }
+        imagem: { type: string, nullable: true, description: URL ou data URL base64 }
         createdAt: { type: string, format: date-time }
     ProductInput:
       type: object
@@ -540,12 +543,21 @@ components:
         unidade: { type: string }
         cultivo: { type: string }
         regiao: { type: string }
+        descricao: { type: string, nullable: true, maxLength: 2000 }
         preco: { type: number, exclusiveMinimum: 0 }
-        imagem: { type: string, format: uri }
+        imagem: { type: string, nullable: true, description: URL ou data URL base64 }
     ProductUpdate:
-      allOf:
-        - $ref: '#/components/schemas/ProductInput'
-      required: []
+      type: object
+      additionalProperties: false
+      properties:
+        nome: { type: string, minLength: 1 }
+        quantidade: { type: number, exclusiveMinimum: 0 }
+        unidade: { type: string }
+        cultivo: { type: string }
+        regiao: { type: string }
+        descricao: { type: string, nullable: true, maxLength: 2000 }
+        preco: { type: number, exclusiveMinimum: 0 }
+        imagem: { type: string, nullable: true, description: URL ou data URL base64 }
     Cost:
       type: object
       properties:
@@ -610,8 +622,9 @@ components:
         tipo: { type: string }
         condicoes: { type: string }
         dias: { type: number }
-        imagem: { type: string, format: uri, nullable: true }
-        disponibilidade: { type: boolean }
+        imagem: { type: string, nullable: true, description: URL ou data URL base64 }
+        localizacao: { type: string, nullable: true }
+        proprietario: { type: string, nullable: true }
         createdAt: { type: string, format: date-time }
     MachineInput:
       type: object
@@ -623,7 +636,11 @@ components:
         tipo: { type: string }
         condicoes: { type: string }
         dias: { type: number, exclusiveMinimum: 0 }
-        imagem: { type: string, format: uri }
+        imagem: { type: string, nullable: true, description: URL ou data URL base64 }
+        localizacao: { type: string, nullable: true }
+        proprietario: { type: string, nullable: true }
+        disponibilidade: { type: boolean }
+        disponibilidade: { type: boolean }
     MachineUpdate:
       type: object
       additionalProperties: false
@@ -634,7 +651,9 @@ components:
         tipo: { type: string, minLength: 1 }
         condicoes: { type: string, minLength: 1 }
         dias: { type: number, exclusiveMinimum: 0 }
-        imagem: { type: string, format: uri }
+        imagem: { type: string, nullable: true, description: URL ou data URL base64 }
+        localizacao: { type: string, nullable: true }
+        proprietario: { type: string, nullable: true }
     CatalogMachine:
       allOf:
         - $ref: '#/components/schemas/Machine'

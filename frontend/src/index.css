@@ -3083,6 +3083,104 @@ dialog::backdrop {
   padding: 1.2rem;
 }
 
+.rental-date-picker {
+  position: relative;
+}
+
+.rental-date-trigger {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid #cbd9d0;
+  border-radius: 9px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rental-date-trigger:focus-visible,
+.rental-calendar button:focus-visible {
+  outline: 3px solid rgba(46, 125, 79, 0.3);
+  outline-offset: 2px;
+}
+
+.rental-calendar {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 0.4rem);
+  left: 0;
+  width: min(320px, calc(100vw - 3rem));
+  padding: 0.75rem;
+  border: 1px solid #d7e3da;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(18, 52, 39, 0.2);
+}
+
+.rental-calendar-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+  color: var(--forest);
+  text-transform: capitalize;
+}
+
+.rental-calendar-heading button,
+.rental-calendar-day {
+  min-width: 36px;
+  min-height: 36px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.rental-calendar-heading button {
+  color: var(--leaf);
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.rental-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.2rem;
+  text-align: center;
+}
+
+.rental-calendar-weekday {
+  padding: 0.35rem 0;
+  color: #60796a;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.rental-calendar-day:hover:not(:disabled),
+.rental-calendar-heading button:hover {
+  background: #edf7f1;
+}
+
+.rental-calendar-day.is-selected {
+  background: var(--leaf);
+  color: #fff;
+  font-weight: 800;
+}
+
+.rental-calendar-day:disabled {
+  color: #b8c1bb;
+  cursor: not-allowed;
+}
+
 .machine-details-heading {
   display: flex;
   align-items: flex-start;

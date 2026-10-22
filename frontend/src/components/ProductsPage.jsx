@@ -13,6 +13,7 @@ export default function ProductsPage() {
     quantidade: 1,
     unidade: 'saca_60kg',
     imagem: '',
+    descricao: '',
     regiao: 'Regiao nao informada',
     cultivo: 'convencional',
     preco: 0
@@ -66,6 +67,7 @@ export default function ProductsPage() {
       quantidade: 1,
       unidade: 'saca_60kg',
       imagem: '',
+      descricao: '',
       regiao: 'Regiao nao informada',
       cultivo: 'convencional',
       preco: 0
@@ -105,7 +107,7 @@ export default function ProductsPage() {
     try {
       const dataUrl = await readFileAsDataUrl(file);
       setProductForm((current) => ({ ...current, imagem: dataUrl }));
-      setMessage('Imagem adicionada com sucesso!');
+      setMessage('Imagem selecionada. Salve o produto para confirmar.');
     } catch (error) {
       setMessage(error.message || 'Formato de imagem não permitido.');
     }
@@ -129,25 +131,28 @@ export default function ProductsPage() {
 
     try {
       const payload = {
-        nome: productForm.nome,
+        nome: productForm.nome.trim(),
+        descricao: productForm.descricao.trim() || null,
         quantidade: Number(productForm.quantidade),
         unidade: productForm.unidade,
         cultivo: productForm.cultivo || 'convencional',
         regiao: productForm.regiao || 'Regiao nao informada',
         preco: Number(productForm.preco),
-        ...(productForm.imagem ? { imagem: productForm.imagem } : {})
+        imagem: productForm.imagem || null
       };
 
       if (state.token === 'demo-token') {
         const created = { ...payload, id: crypto.randomUUID(), createdAt: new Date().toISOString() };
         dispatch({ type: 'setProducts', products: [created, ...(state.products || [])] });
         resetProductForm();
+        setMessage('Produto adicionado no modo demonstração; não foi salvo no banco de dados.');
         return;
       }
 
       const created = await apiClient.post('/products', payload);
       dispatch({ type: 'setProducts', products: [created, ...(state.products || [])] });
       resetProductForm();
+      setMessage('Produto salvo com sucesso.');
     } catch (error) {
       const normalized = normalizeApiError(error, 'Não foi possível criar o produto.');
       setMessage(normalized.message);
@@ -163,6 +168,7 @@ export default function ProductsPage() {
       quantidade: product.quantidade || 1,
       unidade: product.unidade || 'saca_60kg',
       imagem: product.imagem || '',
+      descricao: product.descricao || '',
       regiao: product.regiao || 'Regiao nao informada',
       cultivo: product.cultivo || 'convencional',
       preco: Number(product.preco || 0)
@@ -174,8 +180,8 @@ export default function ProductsPage() {
     event.preventDefault();
     if (!editingProductId) return;
 
-    if (Number(productForm.quantidade) <= 0 || Number(productForm.preco) <= 0) {
-      setMessage('Quantidade e preço devem ser maiores que zero.');
+    if (!productForm.nome.trim() || Number(productForm.quantidade) <= 0 || Number(productForm.preco) <= 0) {
+      setMessage('Informe o nome, uma quantidade e um preço maiores que zero.');
       return;
     }
 
@@ -184,13 +190,14 @@ export default function ProductsPage() {
 
     try {
       const payload = {
-        nome: productForm.nome,
+        nome: productForm.nome.trim(),
+        descricao: productForm.descricao.trim() || null,
         quantidade: Number(productForm.quantidade),
         unidade: productForm.unidade,
         cultivo: productForm.cultivo || 'convencional',
         regiao: productForm.regiao || 'Regiao nao informada',
         preco: Number(productForm.preco),
-        ...(productForm.imagem ? { imagem: productForm.imagem } : {})
+        imagem: productForm.imagem || null
       };
 
       if (state.token === 'demo-token') {
@@ -201,6 +208,7 @@ export default function ProductsPage() {
             : product)
         });
         resetProductForm();
+        setMessage('Produto atualizado no modo demonstração; não foi salvo no banco de dados.');
         return;
       }
 
@@ -210,6 +218,7 @@ export default function ProductsPage() {
         products: (state.products || []).map((product) => product.id === editingProductId ? updated : product)
       });
       resetProductForm();
+      setMessage('Produto atualizado com sucesso.');
     } catch (error) {
       const normalized = normalizeApiError(error, 'Não foi possível salvar o produto.');
       setMessage(normalized.message);
@@ -227,6 +236,7 @@ export default function ProductsPage() {
     if (state.token === 'demo-token') {
       dispatch({ type: 'setProducts', products: (state.products || []).filter((product) => product.id !== id) });
       if (editingProductId === id) resetProductForm();
+      setMessage('Produto removido no modo demonstração; não foi excluído do banco de dados.');
       setDeletingId(null);
       return;
     }
@@ -240,6 +250,7 @@ export default function ProductsPage() {
       if (editingProductId === id) {
         resetProductForm();
       }
+      setMessage('Produto excluído com sucesso.');
     } catch (error) {
       const normalized = normalizeApiError(error, 'Não foi possível excluir o produto.');
       setMessage(normalized.message);
@@ -250,7 +261,7 @@ export default function ProductsPage() {
 
   function removeProductImage() {
     setProductForm((current) => ({ ...current, imagem: '' }));
-    setMessage('Imagem removida com sucesso!');
+    setMessage('Imagem removida do formulário. Salve as alterações para confirmar.');
   }
 
   return (
@@ -316,6 +327,7 @@ function ProductForm({ productForm, setProductForm, editingProductId, addProduct
       </div>
       {message && <div className="status-message">{message}</div>}
       <label>Nome<input type="text" value={productForm.nome} onChange={(e) => setProductForm({ ...productForm, nome: e.target.value })} required /></label>
+      <label>Descrição<textarea value={productForm.descricao} onChange={(e) => setProductForm({ ...productForm, descricao: e.target.value })} /></label>
       <label>Quantidade<input type="number" value={productForm.quantidade} min="1" onChange={(e) => setProductForm({ ...productForm, quantidade: Number(e.target.value) })} /></label>
       <label>Unidade<select value={productForm.unidade} onChange={(e) => setProductForm({ ...productForm, unidade: e.target.value })}><option value="saca_60kg">Saca 60kg</option><option value="kg">Kg</option></select></label>
       <label>Região<input type="text" value={productForm.regiao} onChange={(e) => setProductForm({ ...productForm, regiao: e.target.value })} /></label>
@@ -350,6 +362,7 @@ function ProductCard({ product, onEdit, onDelete, deleting }) {
           <div><span>🌿 Cultivo</span><strong>{product.cultivo || 'Convencional'}</strong></div>
           <div><span>💰 Preço</span><strong>R$ {Number(product.preco || 0).toFixed(2)}</strong></div>
         </div>
+        {product.descricao && <p className="machine-card-description">{product.descricao}</p>}
         <div className="product-card-actions">
           <button className="btn secondary small" type="button" onClick={onEdit}>Editar</button>
           <button className="btn danger small" type="button" onClick={onDelete} disabled={deleting}>{deleting ? 'Excluindo...' : 'Excluir'}</button>

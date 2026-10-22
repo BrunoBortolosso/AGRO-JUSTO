@@ -17,7 +17,8 @@ const LoginSchema = z.object({
 
 const UpdateMeSchema = z.object({
   nome: z.string().trim().min(1).optional(),
-  regiao: z.string().trim().min(1).nullable().optional()
+  regiao: z.string().trim().transform((value) => value || null).nullable().optional(),
+  bio: z.string().trim().max(2000).nullable().optional()
 }).strict();
 
 export { RegisterSchema, LoginSchema, UpdateMeSchema };

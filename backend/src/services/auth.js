@@ -10,6 +10,7 @@ const userSelect = {
   tipoUsuario: true,
   telefone: true,
   regiao: true,
+  bio: true,
   dataCadastro: true
 };
 
@@ -21,6 +22,7 @@ function serializeUser(user) {
     tipoUsuario: user.tipoUsuario,
     telefone: user.telefone,
     regiao: user.regiao,
+    bio: user.bio,
     createdAt: user.dataCadastro
   };
 }

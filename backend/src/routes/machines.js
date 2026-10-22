@@ -15,6 +15,8 @@ const machineSelect = {
   condicoes: true,
   dias: true,
   imagem: true,
+  localizacao: true,
+  proprietario: true,
   disponibilidade: true,
   dataCadastro: true
 };
@@ -40,6 +42,8 @@ function serializeMachine(machine) {
     condicoes: machine.condicoes,
     dias: Number(machine.dias),
     imagem: machine.imagem,
+    localizacao: machine.localizacao,
+    proprietario: machine.proprietario,
     disponibilidade: machine.disponibilidade,
     createdAt: machine.dataCadastro
   };
@@ -49,8 +53,8 @@ function serializeCatalogMachine(machine) {
   return {
     ...serializeMachine(machine),
     ownerId: machine.usuarioId,
-    proprietario: machine.usuario.nome,
-    localizacao: machine.usuario.regiao || "Região não informada",
+    proprietario: machine.proprietario || machine.usuario.nome,
+    localizacao: machine.localizacao || machine.usuario.regiao || "Região não informada",
     activeRentals: machine.alugueis.map(({ start, end }) => ({ start, end }))
   };
 }
@@ -87,7 +91,7 @@ router.get("/catalog", async (_req, res) => {
 });
 
 router.post("/", validate(CreateMachineSchema), async (req, res) => {
-  const { nome, preco, tipo, condicoes, dias, imagem } = req.body;
+  const { nome, preco, tipo, condicoes, dias, imagem, localizacao, proprietario } = req.body;
   const machine = await prisma.equipamento.create({
     data: {
       usuarioId: req.user.id,
@@ -97,6 +101,8 @@ router.post("/", validate(CreateMachineSchema), async (req, res) => {
       condicoes,
       dias,
       imagem,
+      localizacao,
+      proprietario,
       disponibilidade: true
     },
     select: machineSelect
@@ -113,7 +119,10 @@ router.patch("/:id", validate(UpdateMachineSchema), async (req, res) => {
     ...(req.body.tipo !== undefined ? { tipo: req.body.tipo } : {}),
     ...(req.body.condicoes !== undefined ? { condicoes: req.body.condicoes } : {}),
     ...(req.body.dias !== undefined ? { dias: req.body.dias } : {}),
-    ...(req.body.imagem !== undefined ? { imagem: req.body.imagem } : {})
+    ...(req.body.imagem !== undefined ? { imagem: req.body.imagem } : {}),
+    ...(req.body.localizacao !== undefined ? { localizacao: req.body.localizacao } : {}),
+    ...(req.body.proprietario !== undefined ? { proprietario: req.body.proprietario } : {}),
+    ...(req.body.disponibilidade !== undefined ? { disponibilidade: req.body.disponibilidade } : {})
   };
   const updated = await prisma.equipamento.updateMany({
     where: { id, usuarioId: req.user.id, excluidoEm: null },

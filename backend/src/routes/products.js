@@ -14,6 +14,7 @@ const productSelect = {
   unidadeMedida: true,
   tipoCultivo: true,
   regiao: true,
+  descricao: true,
   preco: true,
   imagem: true,
   dataCadastro: true
@@ -33,6 +34,7 @@ function serializeProduct(product) {
     unidade: product.unidadeMedida,
     cultivo: product.tipoCultivo,
     regiao: product.regiao,
+    descricao: product.descricao,
     preco: Number(product.preco),
     imagem: product.imagem,
     createdAt: product.dataCadastro
@@ -52,7 +54,7 @@ router.get("/", async (req, res) => {
 });
 
 router.post("/", validate(CreateProductSchema), async (req, res) => {
-  const { nome, quantidade, unidade, cultivo, regiao, preco, imagem } = req.body;
+  const { nome, descricao, quantidade, unidade, cultivo, regiao, preco, imagem } = req.body;
   const product = await prisma.produto.create({
     data: {
       usuarioId: req.user.id,
@@ -61,6 +63,7 @@ router.post("/", validate(CreateProductSchema), async (req, res) => {
       unidadeMedida: unidade,
       tipoCultivo: cultivo,
       regiao,
+      descricao,
       preco,
       imagem
     },
@@ -73,7 +76,7 @@ router.post("/", validate(CreateProductSchema), async (req, res) => {
 router.patch("/:id", validate(UpdateProductSchema), async (req, res) => {
   const id = parseIdParam(req);
   const data = {};
-  const fields = ["nome", "quantidade", "unidade", "cultivo", "regiao", "preco", "imagem"];
+  const fields = ["nome", "descricao", "quantidade", "unidade", "cultivo", "regiao", "preco", "imagem"];
 
   for (const field of fields) {
     if (req.body[field] === undefined) continue;

@@ -81,7 +81,16 @@ export function reducer(state, action) {
     case 'setAuthMessage':
       return { ...state, authMessage: action.message };
     case 'setSession': {
-      const profile = action.user?.profile || state.profile || defaultProfile;
+      const profile = {
+        ...defaultProfile,
+        ...(state.profile || {}),
+        ...(action.user ? {
+          nome: action.user.nome || '',
+          regiao: action.user.regiao || '',
+          bio: action.user.bio || ''
+        } : {}),
+        ...(action.user?.profile || {})
+      };
       return {
         ...state,
         auth: action.user || null,
@@ -115,7 +124,13 @@ export function reducer(state, action) {
       return {
         ...state,
         profile,
-        auth: state.auth ? { ...state.auth, profile } : state.auth
+        auth: state.auth ? {
+          ...state.auth,
+          nome: profile.nome,
+          regiao: profile.regiao,
+          bio: profile.bio,
+          profile
+        } : state.auth
       };
     }
     default:

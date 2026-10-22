@@ -32,6 +32,97 @@ function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function dateFromISO(value) {
+  const [year, month, day] = value.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function dateToISO(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function PortugueseDatePicker({ value, min, onChange }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [visibleMonth, setVisibleMonth] = useState(() => {
+    const initialDate = dateFromISO(value || min || todayISO());
+    return new Date(initialDate.getFullYear(), initialDate.getMonth(), 1);
+  });
+  const year = visibleMonth.getFullYear();
+  const month = visibleMonth.getMonth();
+  const firstWeekday = (new Date(year, month, 1).getDay() + 6) % 7;
+  const days = Array.from({ length: 42 }, (_, index) => {
+    const day = index - firstWeekday + 1;
+    return day > 0 && day <= new Date(year, month + 1, 0).getDate() ? day : null;
+  });
+  const selectedDate = value ? dateFromISO(value) : null;
+  const minimumDate = min ? dateFromISO(min) : null;
+
+  function toggleCalendar() {
+    if (!isOpen) {
+      const initialDate = dateFromISO(value || min || todayISO());
+      setVisibleMonth(new Date(initialDate.getFullYear(), initialDate.getMonth(), 1));
+    }
+    setIsOpen((open) => !open);
+  }
+
+  return (
+    <div className="rental-date-picker">
+      <button
+        className="rental-date-trigger"
+        type="button"
+        aria-haspopup="dialog"
+        aria-expanded={isOpen}
+        onClick={toggleCalendar}
+      >
+        {selectedDate
+          ? new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long' }).format(selectedDate)
+          : 'Selecione uma data'}
+        <span aria-hidden="true">▾</span>
+      </button>
+      {isOpen && (
+        <div className="rental-calendar" role="dialog" aria-label="Selecionar data do aluguel">
+          <div className="rental-calendar-heading">
+            <button type="button" aria-label="Mês anterior" onClick={() => setVisibleMonth(new Date(year, month - 1, 1))}>‹</button>
+            <strong>{new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(visibleMonth)}</strong>
+            <button type="button" aria-label="Próximo mês" onClick={() => setVisibleMonth(new Date(year, month + 1, 1))}>›</button>
+          </div>
+          <div className="rental-calendar-grid" role="grid">
+            {['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'].map((weekday) => (
+              <span className="rental-calendar-weekday" key={weekday} role="columnheader">{weekday}</span>
+            ))}
+            {days.map((day, index) => {
+              if (!day) return <span className="rental-calendar-empty" key={`empty-${index}`} />;
+              const date = new Date(year, month, day);
+              const isoDate = dateToISO(date);
+              const isSelected = value === isoDate;
+              const isDisabled = Boolean(minimumDate && date < minimumDate);
+              return (
+                <button
+                  className={`rental-calendar-day${isSelected ? ' is-selected' : ''}`}
+                  type="button"
+                  role="gridcell"
+                  key={isoDate}
+                  aria-pressed={isSelected}
+                  disabled={isDisabled}
+                  onClick={() => {
+                    onChange(isoDate);
+                    setIsOpen(false);
+                  }}
+                >
+                  {day}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function MachinesPage() {
   const { state, dispatch } = useAgro();
   const [machineForm, setMachineForm] = useState({
@@ -40,8 +131,9 @@ export default function MachinesPage() {
     diaria: 100,
     imagem: '',
     descricao: 'Máquina cadastrada',
-    localizacao: 'Engenheiro Coelho',
-    proprietario: 'Produtor AgroJusto'
+    localizacao: state.auth?.regiao || 'Engenheiro Coelho',
+    proprietario: state.auth?.nome || 'Produtor AgroJusto',
+    disponibilidade: true
   });
   const [editingMachineId, setEditingMachineId] = useState(null);
   const [message, setMessage] = useState('');
@@ -55,10 +147,12 @@ export default function MachinesPage() {
   const [rentalSubmitting, setRentalSubmitting] = useState(false);
   const [showRentalForm, setShowRentalForm] = useState(false);
   const [finishingRentalId, setFinishingRentalId] = useState('');
+  const [savingMachine, setSavingMachine] = useState(false);
+  const [deletingMachineId, setDeletingMachineId] = useState('');
   const machineDetailsDialogRef = useRef(null);
   const visibleMachines = state.token === 'demo-token'
     ? (state.machines || [])
-    : [...catalogMachines, ...(state.machines || []).filter((machine) => !machine.fromApi)];
+    : catalogMachines;
   const visibleRentals = state.token === 'demo-token' ? [] : loadedRentals;
 
   useEffect(() => {
@@ -97,8 +191,9 @@ export default function MachinesPage() {
       diaria: 100,
       imagem: '',
       descricao: 'Máquina cadastrada',
-      localizacao: 'Engenheiro Coelho',
-      proprietario: 'Produtor AgroJusto'
+      localizacao: state.auth?.regiao || 'Engenheiro Coelho',
+      proprietario: state.auth?.nome || 'Produtor AgroJusto',
+      disponibilidade: true
     });
     setEditingMachineId(null);
     setMessage('');
@@ -110,8 +205,9 @@ export default function MachinesPage() {
       diaria: Number(machine.preco || 0),
       descricao: machine.condicoes || 'Máquina cadastrada',
       status: machine.disponibilidade ? 'disponivel' : 'alugada',
-      proprietario: state.auth?.nome || 'Produtor AgroJusto',
-      localizacao: state.auth?.regiao || 'Região não informada',
+      proprietario: machine.proprietario || state.auth?.nome || 'Produtor AgroJusto',
+      localizacao: machine.localizacao || state.auth?.regiao || 'Região não informada',
+      disponibilidade: machine.disponibilidade !== false,
       ownerId,
       fromApi: true
     };
@@ -147,7 +243,7 @@ export default function MachinesPage() {
     try {
       const dataUrl = await readFileAsDataUrl(file);
       setMachineForm((current) => ({ ...current, imagem: dataUrl }));
-      setMessage('Imagem adicionada com sucesso!');
+      setMessage('Imagem selecionada. Salve a máquina para confirmar.');
     } catch (err) {
       setMessage(err.message || 'Formato de imagem não permitido.');
     }
@@ -155,7 +251,10 @@ export default function MachinesPage() {
 
   async function addMachine(event) {
     event.preventDefault();
-    if (!machineForm.nome.trim()) return;
+    if (!machineForm.nome.trim()) {
+      setMessage('Informe o nome da máquina.');
+      return;
+    }
 
     const normalizedTipo = String(machineForm.tipo || 'trator').toLowerCase();
     const image = machineForm.imagem || machineImages[normalizedTipo] || placeholderImage;
@@ -175,6 +274,7 @@ export default function MachinesPage() {
     if (state.token === 'demo-token') {
       dispatch({ type: 'setMachines', machines: [...(state.machines || []), machine] });
       resetMachineForm();
+      setMessage('Máquina adicionada no modo demonstração; não foi salva no banco de dados.');
       return;
     }
 
@@ -183,6 +283,7 @@ export default function MachinesPage() {
       return;
     }
 
+    setSavingMachine(true);
     setMessage('');
     try {
       const created = await apiClient.post('/machines', {
@@ -191,13 +292,18 @@ export default function MachinesPage() {
         tipo: machineForm.tipo,
         condicoes: machineForm.descricao || 'Máquina cadastrada',
         dias: 1,
-        ...(machineForm.imagem.startsWith('http') ? { imagem: machineForm.imagem } : {})
+        imagem: machineForm.imagem || null,
+        localizacao: machineForm.localizacao.trim() || null,
+        proprietario: machineForm.proprietario.trim() || null
       });
       setCatalogMachines((machines) => [toMachineCard(created), ...machines]);
       resetMachineForm();
+      setMessage('Máquina salva com sucesso.');
     } catch (error) {
       const normalized = normalizeApiError(error, 'Não foi possível cadastrar a máquina.');
       setMessage(normalized.message);
+    } finally {
+      setSavingMachine(false);
     }
   }
 
@@ -210,7 +316,8 @@ export default function MachinesPage() {
       imagem: machine.imagem || '',
       descricao: machine.descricao || 'Máquina cadastrada',
       localizacao: machine.localizacao || 'Engenheiro Coelho',
-      proprietario: machine.proprietario || 'Produtor AgroJusto'
+      proprietario: machine.proprietario || 'Produtor AgroJusto',
+      disponibilidade: machine.disponibilidade !== false
     });
     setMessage('');
   }
@@ -218,15 +325,24 @@ export default function MachinesPage() {
   async function saveEdit(event) {
     event.preventDefault();
     if (!editingMachineId) return;
+    if (!machineForm.nome.trim()) {
+      setMessage('Informe o nome da máquina.');
+      return;
+    }
 
     const normalizedTipo = String(machineForm.tipo || 'trator').toLowerCase();
     const currentMachine = (state.machines || []).find((machine) => machine.id === editingMachineId)
       || catalogMachines.find((machine) => machine.id === editingMachineId);
+    if (state.token !== 'demo-token' && !currentMachine?.fromApi) {
+      setMessage('A máquina não está cadastrada no servidor e não pode ser salva nesta conta.');
+      return;
+    }
     if (currentMachine?.fromApi) {
       if (Number(machineForm.diaria) <= 0) {
         setMessage('Informe uma diária maior que zero para atualizar a máquina.');
         return;
       }
+      setSavingMachine(true);
       setMessage('');
       try {
         const updated = await apiClient.patch(`/machines/${editingMachineId}`, {
@@ -235,15 +351,21 @@ export default function MachinesPage() {
           tipo: machineForm.tipo,
           condicoes: machineForm.descricao || 'Máquina cadastrada',
           dias: 1,
-          ...(machineForm.imagem.startsWith('http') ? { imagem: machineForm.imagem } : {})
+          imagem: machineForm.imagem || null,
+          localizacao: machineForm.localizacao.trim() || null,
+          proprietario: machineForm.proprietario.trim() || null,
+          disponibilidade: machineForm.disponibilidade
         });
         setCatalogMachines((machines) => machines.map((machine) => machine.id === editingMachineId
-          ? { ...machine, ...toMachineCard(updated, machine.ownerId), proprietario: machine.proprietario, localizacao: machine.localizacao }
+          ? { ...machine, ...toMachineCard(updated, machine.ownerId) }
           : machine));
         resetMachineForm();
+        setMessage('Máquina atualizada com sucesso.');
       } catch (error) {
         const normalized = normalizeApiError(error, 'Não foi possível salvar as alterações da máquina.');
         setMessage(normalized.message);
+      } finally {
+        setSavingMachine(false);
       }
       return;
     }
@@ -256,32 +378,43 @@ export default function MachinesPage() {
       imagem: machineForm.imagem || machineImages[normalizedTipo] || placeholderImage,
       descricao: machineForm.descricao || 'Máquina cadastrada',
       localizacao: machineForm.localizacao || 'Engenheiro Coelho',
-      proprietario: machineForm.proprietario || 'Produtor AgroJusto'
+      proprietario: machineForm.proprietario || 'Produtor AgroJusto',
+      disponibilidade: machineForm.disponibilidade,
+      status: machineForm.disponibilidade ? 'disponivel' : 'alugada'
     } : machine);
 
     dispatch({ type: 'setMachines', machines: updated });
     resetMachineForm();
+    setMessage('Máquina atualizada no modo demonstração; não foi salva no banco de dados.');
   }
 
   async function deleteMachine(id) {
+    if (!window.confirm('Deseja excluir esta máquina?')) return;
     const apiMachine = catalogMachines.find((machine) => machine.id === id);
     if (apiMachine) {
+      setDeletingMachineId(id);
       setMessage('');
       try {
         await apiClient.del(`/machines/${id}`);
         setCatalogMachines((machines) => machines.filter((machine) => machine.id !== id));
+        if (editingMachineId === id) resetMachineForm();
+        setMessage('Máquina excluída com sucesso.');
       } catch (error) {
         const normalized = normalizeApiError(error, 'Não foi possível excluir a máquina.');
         setMessage(normalized.message);
+      } finally {
+        setDeletingMachineId('');
       }
       return;
     }
     dispatch({ type: 'setMachines', machines: (state.machines || []).filter((machine) => machine.id !== id) });
+    if (editingMachineId === id) resetMachineForm();
+    setMessage('Máquina removida no modo demonstração; não foi excluída do banco de dados.');
   }
 
   function removeMachineImage() {
     setMachineForm((current) => ({ ...current, imagem: '' }));
-    setMessage('Imagem removida com sucesso!');
+    setMessage('Imagem removida do formulário. Salve as alterações para confirmar.');
   }
 
   function showMachineDetails(machine) {
@@ -406,6 +539,7 @@ export default function MachinesPage() {
             handleMachineImageChange={handleMachineImageChange}
             removeMachineImage={removeMachineImage}
             message={message}
+            saving={savingMachine}
           />
           <div className="product-list">
             {(visibleMachines || []).map((machine) => (
@@ -416,6 +550,7 @@ export default function MachinesPage() {
                 onDetails={() => showMachineDetails(machine)}
                 onEdit={() => startEdit(machine)}
                 onDelete={() => deleteMachine(machine.id)}
+                deleting={deletingMachineId === machine.id}
               />
             ))}
           </div>
@@ -468,11 +603,11 @@ export default function MachinesPage() {
               <form className="product-form machine-rental-form" onSubmit={submitRental}>
                 <label>
                   Data de início
-                  <input type="date" min={todayISO()} value={rentalStart} onChange={(event) => setRentalStart(event.target.value)} required />
+                  <PortugueseDatePicker value={rentalStart} min={todayISO()} onChange={setRentalStart} />
                 </label>
                 <label>
                   Data de término
-                  <input type="date" min={rentalStart || todayISO()} value={rentalEnd} onChange={(event) => setRentalEnd(event.target.value)} required />
+                  <PortugueseDatePicker value={rentalEnd} min={rentalStart || todayISO()} onChange={setRentalEnd} />
                 </label>
                 <label>
                   Observações
@@ -528,7 +663,7 @@ export default function MachinesPage() {
   );
 }
 
-function MachineForm({ machineForm, setMachineForm, editingMachineId, addMachine, saveEdit, resetMachineForm, handleMachineImageChange, removeMachineImage, message }) {
+function MachineForm({ machineForm, setMachineForm, editingMachineId, addMachine, saveEdit, resetMachineForm, handleMachineImageChange, removeMachineImage, message, saving }) {
   const imagePreview = machineForm.imagem || placeholderImage;
 
   return (
@@ -584,20 +719,28 @@ function MachineForm({ machineForm, setMachineForm, editingMachineId, addMachine
         <input type="text" value={machineForm.proprietario} onChange={(e) => setMachineForm({ ...machineForm, proprietario: e.target.value })} />
       </label>
 
+        <label>
+          Disponibilidade
+          <select value={machineForm.disponibilidade ? 'disponivel' : 'indisponivel'} onChange={(e) => setMachineForm({ ...machineForm, disponibilidade: e.target.value === 'disponivel' })}>
+            <option value="disponivel">Disponível</option>
+            <option value="indisponivel">Indisponível</option>
+          </select>
+        </label>
+
       <label>
         Descrição
         <textarea value={machineForm.descricao} onChange={(e) => setMachineForm({ ...machineForm, descricao: e.target.value })} />
       </label>
 
       <div className="form-actions">
-        <button className="btn" type="submit">{editingMachineId ? 'Salvar alterações' : 'Adicionar máquina'}</button>
+        <button className="btn" type="submit" disabled={saving}>{saving ? 'Salvando...' : (editingMachineId ? 'Salvar alterações' : 'Adicionar máquina')}</button>
         {editingMachineId && <button className="btn secondary" type="button" onClick={resetMachineForm}>Cancelar</button>}
       </div>
     </form>
   );
 }
 
-function MachineCard({ machine, canManage, onDetails, onEdit, onDelete }) {
+function MachineCard({ machine, canManage, onDetails, onEdit, onDelete, deleting }) {
   const image = machine.imagem || machineImages[String(machine.tipo || 'trator').toLowerCase()] || placeholderImage;
   const status = machine.status === 'alugada' ? 'Indisponível' : 'Disponível';
 
@@ -625,7 +768,7 @@ function MachineCard({ machine, canManage, onDetails, onEdit, onDelete }) {
         <div className="product-card-actions">
           <button className="btn small" type="button" onClick={onDetails}>Ver detalhes</button>
           {canManage && <button className="btn secondary small" type="button" onClick={onEdit}>Editar</button>}
-          {canManage && <button className="btn danger small" type="button" onClick={onDelete}>Excluir</button>}
+          {canManage && <button className="btn danger small" type="button" onClick={onDelete} disabled={deleting}>{deleting ? 'Excluindo...' : 'Excluir'}</button>}
         </div>
       </div>
     </article>

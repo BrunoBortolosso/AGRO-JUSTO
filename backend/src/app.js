@@ -51,7 +51,7 @@ function createApp() {
     methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Authorization", "Content-Type"]
   }));
-  app.use(express.json());
+  app.use(express.json({ limit: "8mb" }));
 
   app.get("/health", (_req, res) => {
     res.json({ ok: true, service: "agrojusto-backend" });
